@@ -6,11 +6,27 @@
 #include "sensor_msgs/image_encodings.h"
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include "opencv2/core/core.hpp"
 #include <stdio.h>
 #include <math.h>
 #include <marvel_v_0_1/Guidance_Command.h>
 #include <marvel_v_0_1/obstacle_avoidance.h>
-
+#include <fstream>
+#include <iostream>
+#include "ros/ros.h"
+#include "std_msgs/String.h"
+#include "sensor_msgs/Image.h"
+#include "cv_bridge/cv_bridge.h"
+#include "image_transport/image_transport.h"
+#include "sensor_msgs/image_encodings.h"
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <iostream>
+#include <string>
+#include "opencv2/core/core.hpp"
 
 /**
  * This code is under B.S.D licence
@@ -21,6 +37,10 @@ marvel_v_0_1::Guidance_Command guidance_msg;
 marvel_v_0_1::obstacle_avoidance vdata;
 
 float vx_uni = 0,vy_uni=0,vz_uni=0;
+
+
+	int frame=1;
+
 //
 // Guidance message callback function
 //
@@ -94,7 +114,7 @@ class ImageConverter
      
       void imageCb_d(const sensor_msgs::ImageConstPtr& msg)
   {
-
+    	 std::ofstream myfile ("output.txt");
 	double source_po_x=0;
 	double source_po_y=0;
 	double source_po_z=0;
@@ -179,9 +199,38 @@ class ImageConverter
     source_po_x = source_po_x / ((double)(cv_ptr->image.rows * cv_ptr->image.cols)) + vx_uni;
     source_po_y = source_po_y / ((double)(cv_ptr->image.rows * cv_ptr->image.cols)) + vy_uni;
     source_po_z = source_po_z / ((double)(cv_ptr->image.rows * cv_ptr->image.cols)) + vz_uni;
-	printf ("X: %f \n", source_po_x);
-	printf ("Y: %f \n", source_po_y);
-	printf ("Z: %f \n", source_po_z);
+
+
+	
+
+	 
+	 
+	 //int fontFace = cv::FONT_HERSHEY_COMPLEX_SMALL;
+       double fontScale = 1.5;
+       int thickness = 2;
+       //cv::Point textOrg(imgW/5, imgH/1.2);
+	   std::ostringstream strx;
+	   strx<< " X=  "<<source_po_x;
+	   std::ostringstream stry;
+	   stry<< " Y=  "<<source_po_y;
+	   std::ostringstream strz;
+	   strz<< " Z=  "<<source_po_z;
+	   std::string str=strx.str();
+       //std::string someText = source_po_x);
+       cv::putText(blur_img, str, cv::Point(10,30),  cv::FONT_HERSHEY_COMPLEX_SMALL, fontScale, cv::Scalar::all(255), thickness,4);
+	   str=stry.str();
+		cv::putText(blur_img, str, cv::Point(10,60),  cv::FONT_HERSHEY_COMPLEX_SMALL, fontScale, cv::Scalar::all(255), thickness,4);
+		strz.str();
+		cv::putText(blur_img, str, cv::Point(10,90),  cv::FONT_HERSHEY_COMPLEX_SMALL, fontScale, cv::Scalar::all(255), thickness,4);
+		
+	   cv::imshow( "OPENCV_WINDOW", blur_img);
+	   std::ostringstream framex;
+	   framex<< "../../../../home/odroid/workspace/marvel_v_0_1/im"<<frame<<".jpg";
+	   std::cout<<  framex.str();
+	   cv::imwrite(framex.str(),blur_img);
+	   frame=frame+1;
+	
+
 	
     value=source_po_x;
     value1=source_po_y;
@@ -191,16 +240,13 @@ class ImageConverter
     vdata.vz=value2;
     chatter_pub.publish(vdata);
     ros::spinOnce();
-    
-    
 
 
-
-    cv::imshow("Blur", blur_img);
+    //cv::imshow("Blur", blur_img);
     //cv::imshow("Depth", cv_ptr->image);
 
 
-    cv::waitKey(1);
+    cv::waitKey(10);
 
     //image_pub_.publish(cv_ptr->toImageMsg());
   }

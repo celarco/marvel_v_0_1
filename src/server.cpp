@@ -25,6 +25,16 @@ int roll = 0, pitch = 0, yaw = 0, throttle = 0;
 int mode = 0;
 radio rc;
 //
+// Guidance commands bound
+//
+float bound(float command) {
+	float c;
+	c = command;
+	if(command > 90) c = 90.0;
+	if(command < -90) c = -90.0;
+	return c;
+}
+//
 // Mavlink message receive and handle function
 //
 void msg_receive(uint8_t c) {
@@ -48,12 +58,12 @@ void msg_receive(uint8_t c) {
             case MAVLINK_MSG_ID_ATTITUDE:
 				mavlink_attitude_t attitude_msg;
 				mavlink_msg_attitude_decode(&msg, &attitude_msg);
-				autopilot_msg.rate = attitude_msg.yawspeed * 180 / 3.14;
+				autopilot_msg.rate = attitude_msg.yawspeed * 180 / 3.1415;
+				autopilot_msg.heading = attitude_msg.yaw * 180 / 3.1415;
 			break;
 			case MAVLINK_MSG_ID_VFR_HUD:
 				mavlink_vfr_hud_t vfr_msg;
 				mavlink_msg_vfr_hud_decode(&msg, &vfr_msg);
-				autopilot_msg.heading = vfr_msg.heading;
 				autopilot_msg.climb = vfr_msg.climb;
 			break;
 			case MAVLINK_MSG_ID_PARAM_VALUE:
@@ -173,6 +183,7 @@ void msg_receive(uint8_t c) {
 					
 					case 500:
 					std::cout << "Parameters received...!" << std::endl;
+					autopilot_msg.ready = true;
 					break;
 				}
 			break;
@@ -371,18 +382,18 @@ void msg_send_request_stream() {
 //
 void guidance_msg_Callback(const marvel_v_0_1::Guidance_Command::ConstPtr& msg) {
 	current_arm_status = msg->arm;
-	throttle = rc.calc_throttle(int(msg->throttle));
-	roll = rc.calc_roll(int(msg->roll));
-	pitch = rc.calc_pitch(int(msg->pitch));
-	yaw = rc.calc_yaw(int(msg->yaw));
-	mode = rc.calc_mode(int(msg->mode));
+	throttle = rc.calc_throttle(int(bound(msg->throttle)));
+	roll = rc.calc_roll(int(bound(msg->roll)));
+	pitch = rc.calc_pitch(int(bound(msg->pitch)));
+	yaw = rc.calc_yaw(int(bound(msg->yaw)));
+	mode = rc.calc_mode(int(bound(msg->mode)));
 }
 //
 // Main program
 //
 int main(int argc, char **argv) {
 
-
+	
     printf( " ********************************************** \n" );
     printf( " ********************************************** \n" );
     printf( " *                                            * \n" );
@@ -406,8 +417,6 @@ int main(int argc, char **argv) {
     printf( " *                                            * \n" );
     printf( " ********************************************** \n" );
     printf( " ********************************************** \n" );
-
-
     //
     // Port configuration
     //
@@ -420,8 +429,12 @@ int main(int argc, char **argv) {
     ros::NodeHandle n;
     ros::Publisher pub = n.advertise<marvel_v_0_1::Autopilot>("server", 1000);
     ros::Subscriber sub = n.subscribe("guidance_pack", 1000, guidance_msg_Callback);
-    ros::Timer rc_timer = n.createTimer(ros::Duration(0.1), msg_send_radio_callback);
+    ros::Timer rc_timer = n.createTimer(ros::Duration(0.05), msg_send_radio_callback);
 	ros::Timer heartbeat_timer = n.createTimer(ros::Duration(1.0), msg_send_heartbeat_callback);
+	//
+	// Initial configuration
+	//
+	autopilot_msg.ready = false;
 	//
 	// Read autopilot parameters
 	//
@@ -435,13 +448,13 @@ int main(int argc, char **argv) {
         asio::read(port, asio::buffer(&r_byte,1));
         msg_receive(uint8_t(r_byte));
 		
-	 	if(((current_arm_status == 1)&&(last_arm_status == 0)) || ((current_arm_status == 1)&&(autopilot_msg.armed == 0))) {
+	 	if((current_arm_status == 1)&&(last_arm_status == 0)) {
 			last_arm_status = 1;
 			msg_send_arm();
 		}
 		if((current_arm_status == 0)&&(last_arm_status == 1)) {
 			last_arm_status = 0;
-			msg_send_disarm();
+			//msg_send_disarm();
 		} 
 		ros::spinOnce();
         pub.publish(autopilot_msg);

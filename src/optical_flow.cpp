@@ -58,7 +58,7 @@ void msg_resolve(uint8_t c) {
                 last_flow_time = flow.time_usec;
 
                 optFlowMsg.ground_distance = flow.ground_distance;
-                std::cout << std::abs(debug.x) << " ** " << y <<std::endl;
+                //std::cout << std::abs(debug.x) << " ** " << flow.flow_comp_m_y <<std::endl;
                 optFlowMsg.quality = flow.quality;
             break;
             case MAVLINK_MSG_ID_DEBUG_VECT:

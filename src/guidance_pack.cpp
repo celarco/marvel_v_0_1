@@ -41,8 +41,10 @@ float window_deltax,window_deltay,window_pitch;
 
 float obstacle_vx_setpoint,obstacle_vy_setpoint,obstacle_vz_setpoint,obstacle_psi_setpoint;
 bool armed;
+bool server_ready = false;
 
 pid pid_x, pid_y, pid_z, pid_h;
+
 //
 // Flight plan variables
 //
@@ -56,7 +58,7 @@ unsigned short int current_function_no = 0;
 //
 bool initialize_flight_plan() {
     std::string line;
-    std::ifstream file ("var/flight_plan.txt");
+    std::ifstream file ("/home/odroid/workspace/marvel_v_0_1/var/flight_plan.txt");
     //
     // Reading blocks and functions from the file
     //
@@ -105,7 +107,7 @@ bool initialize_flight_plan() {
         //
         // Printing functions and blocks to verify
         //
-        std::cout << "Blockpiths are :" << std::endl;
+        std::cout << "Blocks are :" << std::endl;
         for(int i = 0; i < block_count; i++) {
 
             std::cout << "Block No. " << b[i].id << " : " << b[i].name <<" with start function No. " << b[i].start_function_number << std::endl;
@@ -142,6 +144,7 @@ void server_receive_Callback(const marvel_v_0_1::Autopilot::ConstPtr& msg) {
 	rate = msg->rate;
 	v_z = msg->climb;
 	armed = msg->armed;
+	server_ready = msg->ready;
 }
 //
 // Window position data receive callback function
@@ -154,11 +157,11 @@ void window_postion_receive_Callback(const marvel_v_0_1::window_detector::ConstP
 //
 // Obstacle Avoidance data receive callback function
 //
-void window_postion_receive_Callback(const marvel_v_0_1::obstacle_avoidance::ConstPtr& msg) {
+void obstacle_avoidance_receive_Callback(const marvel_v_0_1::obstacle_avoidance::ConstPtr& msg) {
 	obstacle_vx_setpoint = msg->vx;
 	obstacle_vy_setpoint = msg->vy;
 	obstacle_vz_setpoint = msg->vz;
-	obstacle_psi_setpoint = msg->psidot
+	obstacle_psi_setpoint = msg->psidot;
 }
 //
 // Main program start
@@ -188,7 +191,6 @@ int main(int argc, char **argv) {
     printf( " *                                            * \n" );
     printf( " ********************************************** \n" );
     printf( " ********************************************** \n" );
-
     //
     // Ros initialization
     //
@@ -200,12 +202,21 @@ int main(int argc, char **argv) {
 	ros::Subscriber sub4 = n.subscribe("obstacle_data", 1000, obstacle_avoidance_receive_Callback);
     ros::Publisher pub = n.advertise<marvel_v_0_1::Guidance_Command>("guidance_pack", 1000);
     marvel_v_0_1::Guidance_Command guidance_msg;
-    
+    //
+	// Running the initial packages
+	//
+	system("rosrun marvel_v_0_1 optical_flow &> /dev/null &");
+	system("rosrun marvel_v_0_1 server &> /dev/null &");
+	//
+	// wait for the server to be ready
+	//
+	while(!server_ready) {
+		ros::spinOnce();
+	}
 	//
     // Flight plan initialization
     //
-	
-    if(!(initialize_flight_plan())) {
+	if(!(initialize_flight_plan())) {
 
         std::cout<<"Error: Flight plan couldn't be initialized"<<std::endl;
         return 0;
@@ -214,13 +225,15 @@ int main(int argc, char **argv) {
         std::cout<<"Flight plan successfully initialized...!"<<std::endl;
     }
 	//
-	// Arming the quadcopter
+	// Autopilot initialization
 	//
 	guidance_msg.arm = 1;
+	guidance_msg.mode = 20;                        //50 change to 20
+	heading_setpoint = heading;
 	//
     // Guidance loop
     //
-    while(1) {
+    while(true) {
         //
         // Handle function characteristics
         //
@@ -304,16 +317,21 @@ int main(int argc, char **argv) {
 			switch (g_lock_param){
 			 
 			case WINDOW_DETECTOR:
-				system("roslaunch openni2_launch openni2.launch  &> /dev/null &");
-				system("rosrun marvel_v_0_1 window_detector  &> /dev/null &");
-				system("rosrun marvel_v_0_1 obstacle_avoidance  &> /dev/null &");
-				guidance_msg.vx_uni=window_deltax*VELOCITY_FAKE_COEFF;
-				guidance_msg.vy_uni=window_deltay*VELOCITY_FAKE_COEFF;
-				guidance_msg.vz_uni=window_deltaz*VELOCITY_FAKE_COEFF;
-				
+				system("roslaunch openni2_launch openni2.launch &> /dev/null &");
+				system("rosrun marvel_v_0_1 window_detector &> /dev/null &");
+				system("rosrun marvel_v_0_1 obstacle_avoidance &> /dev/null &");
+				guidance_msg.vx_uni = 1.4;
+				guidance_msg.vy_uni = window_deltax * 0.0004 ;
+				guidance_msg.vz_uni = window_deltay * 0.0005;
 				v_x_setpoint = obstacle_vx_setpoint;
+				if (v_x_setpoint > 0.15) v_x_setpoint = 0.15;
+				if (v_x_setpoint < -0.15) v_x_setpoint = -0.15;
 				v_y_setpoint = obstacle_vy_setpoint;
+				if (v_y_setpoint > 0.15) v_y_setpoint = 0.15;
+				if (v_y_setpoint < -0.15) v_y_setpoint = -0.15;
 				v_z_setpoint = obstacle_vz_setpoint;
+				if (v_z_setpoint > 0.15) v_z_setpoint = 0.15;
+				if (v_z_setpoint < -0.15) v_z_setpoint = -0.15;
 				
 			break;
 				 
@@ -340,12 +358,13 @@ int main(int argc, char **argv) {
         break;
 
         case VERTICAL_LOCK:
-
+			pid_z.set_coeff(0.8,0);
+			guidance_msg.throttle = 100 * pid_z.loop_once((v_z_setpoint - v_z),0) + 50;
 
         break;
         case VERTICAL_CLIMB:
-			pid_z.set_coeff(0.4,0);
-			guidance_msg.throttle = 100 * pid_z.loop_once((v_z_setpoint - v_z),0) + 50; 
+			pid_z.set_coeff(0.25,0);
+			guidance_msg.throttle = 100 * pid_z.loop_once((v_z_setpoint - v_z),0) +50 ;   
 		break;
         }
 		//
@@ -370,10 +389,24 @@ int main(int argc, char **argv) {
 			}
 		break;
 		case HORIZONTAL_LOCK:
-		
+			pid_x.set_coeff(1,0);
+			if(((v_x_setpoint - v_x) >= 0.01) || ((v_x_setpoint - v_x) <= -0.01)) {
+				guidance_msg.roll = 100 * pid_x.loop_once((v_x_setpoint - v_x),0);
+			}
+			else if (((v_x_setpoint - v_x) <= 0.01) || ((v_x_setpoint - v_x) >= -0.01)) {
+				guidance_msg.roll = 0;
+			}
+			
+			pid_y.set_coeff(1,0);
+			if(((v_y_setpoint - v_y) >= 0.01) || ((v_y_setpoint - v_y) <= -0.01)) {
+				guidance_msg.pitch = 100 * pid_y.loop_once((v_y_setpoint - v_y),0);
+			}
+			else if (((v_y_setpoint - v_y) <= 0.01) || ((v_y_setpoint - v_y) >= -0.01)) {
+				guidance_msg.pitch = 0;
+			}
 		break;
 		case HORIZONTAL_VELOCITY:
-		
+			
 		break;
 		}
 		//
@@ -391,7 +424,8 @@ int main(int argc, char **argv) {
 		
 		break;
 		}
-
+		std::cout << current_function_no << std::endl;
+        std::cout << guidance_msg.roll << " " << guidance_msg.pitch << " " << guidance_msg.throttle << " " << guidance_msg.yaw << " " << std::endl;
         ros::spinOnce();
         pub.publish(guidance_msg);
     }
