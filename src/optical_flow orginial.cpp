@@ -5,29 +5,18 @@
 #include <marvel_v_0_1/OpticalFlow.h>
 #include <time.h>
 #include <cmath>
-#include <fstream>
-
-using namespace std;
 //
 // Initializing boost
 //
 using namespace boost;
-asio::io_service ioss;
-asio::serial_port port(ioss);
+asio::io_service ios;
+asio::serial_port port(ios);
 //
 // Message initialization
 //
 marvel_v_0_1::OpticalFlow optFlowMsg;
 mavlink_optical_flow_t flow;
 mavlink_debug_vect_t debug;
-//
-// logger
-//
-
-std::ofstream logger;
-
-std::ostringstream strx;
-
 //
 // Global variables
 //
@@ -88,17 +77,7 @@ void msg_resolve(uint8_t c) {
         }
         optFlowMsg.flow_x = x;
         optFlowMsg.flow_y = y;
-		
-		
-		
-		
     }
-	
-	
-	strx << x <<" ; "<< y <<" ; "<<gyro_x<<" ; "<<gyro_y<<" ; "<< flow.ground_distance<<" \n ";
-	
-	  
-	cout <<strx.str()<< endl;
 }
 //
 // Main program
@@ -129,13 +108,7 @@ int main(int argc, char **argv) {
     printf( " *                                            * \n" );
     printf( " ********************************************** \n" );
     printf( " ********************************************** \n" );
-	
-	
-	//
-	// logger
-	//
-	logger.open("OpticFlowLOG.txt");
-	 logger<<" flowX ; flowY ; gyro_X ; gyro_Y; Ground_distance; flow_quality  \n";
+
 
     //
     // Port configuration
@@ -155,11 +128,8 @@ int main(int argc, char **argv) {
     while (ros::ok()) {
         asio::read(port, asio::buffer(&next_byte,1));
         msg_resolve(uint8_t(next_byte));
-        logger<<strx.str();
-		ros::spinOnce();
+        ros::spinOnce();
         chatter_pub.publish(optFlowMsg);
-		
-		
     }
 
     port.close();

@@ -1,58 +1,72 @@
-#include "ros/ros.h"
-#include "std_msgs/String.h"
-#include "sensor_msgs/Image.h"
-#include "cv_bridge/cv_bridge.h"
-#include "image_transport/image_transport.h"
-#include "sensor_msgs/image_encodings.h"
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include "opencv2/core/core.hpp"
-#include <stdio.h>
-#include <math.h>
-#include <marvel_v_0_1/Guidance_Command.h>
-#include <marvel_v_0_1/obstacle_avoidance.h>
-#include <fstream>
-#include <iostream>
-#include "ros/ros.h"
-#include "std_msgs/String.h"
-#include "sensor_msgs/Image.h"
-#include "cv_bridge/cv_bridge.h"
-#include "image_transport/image_transport.h"
-#include "sensor_msgs/image_encodings.h"
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#include <iostream>
-#include <string>
-#include "opencv2/core/core.hpp"
 
+// %Tag(FULLTEXT)%
+#include "ros/ros.h"
+#include "std_msgs/String.h"
+#include "sensor_msgs/Image.h"
+#include "cv_bridge/cv_bridge.h"
+#include "image_transport/image_transport.h"
+#include "sensor_msgs/image_encodings.h"
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <stdio.h>
+#include <math.h>
+#include <fstream>
+
+using namespace std;
+ofstream logger;
 /**
- * This code is under B.S.D licence
- **/
+ * This tutorial demonstrates simple receipt of messages over the ROS system.
+ */
  
 
-marvel_v_0_1::Guidance_Command guidance_msg;
-marvel_v_0_1::obstacle_avoidance vdata;
-
-float vx_uni = 0,vy_uni=0,vz_uni=0;
-
-
 	int frame=1;
-
-//
-// Guidance message callback function
-//
-
-void obstacle_subscribe_callback(const marvel_v_0_1::Guidance_Command::ConstPtr& msg) {
-
-    vx_uni=msg->vx_uni;
-    vy_uni=msg->vy_uni;
-    vz_uni=msg->vz_uni;
-    ros::spinOnce();
-
+	
+// Return the rotation matrices for each rotation
+void rotate(cv::Mat& src, double angle, cv::Mat& dst) {
+cv::Mat r = getRotationMatrix2D(cv::Point2f(), angle, 1.0);
+//4 coordinates of the image
+std::vector<cv::Point2f> corners(4);
+corners[0] = cv::Point2f(0, 0);
+corners[1] = cv::Point2f(0, src.rows);
+corners[2] = cv::Point2f(src.cols, 0);
+corners[3] = cv::Point2f(src.cols, src.rows);
+std::vector<cv::Point2f> cornersTransform(4);
+cv::transform(corners, cornersTransform, r);
+//Copy the 2x3 transformation matrix into a 3x3 transformation matrix
+cv::Mat H = cv::Mat::eye(3, 3, CV_64F);
+for(int i = 0; i < 2; i++) {
+for(int j = 0; j < 3; j++) {
+H.at<double>(i, j) = r.at<double>(i, j);
 }
+}
+double offsetX = 0.0, offsetY = 0.0, maxX = 0.0, maxY = 0.0;
+//Get max offset outside of the image and max width / height
+for(size_t i = 0; i < 4; i++) {
+if(cornersTransform[i].x < offsetX) {
+offsetX = cornersTransform[i].x;
+}
+if(cornersTransform[i].y < offsetY) {
+offsetY = cornersTransform[i].y;
+}
+if(cornersTransform[i].x > maxX) {
+maxX = cornersTransform[i].x;
+}
+if(cornersTransform[i].y > maxY) {
+maxY = cornersTransform[i].y;
+}
+}
+offsetX = -offsetX;
+offsetY = -offsetY;
+maxX += offsetX;
+maxY += offsetY;
+cv::Size size_warp(maxX, maxY);
+//Create the transformation matrix to be able to have all the pixels
+cv::Mat H2 = cv::Mat::eye(3, 3, CV_64F);
+H2.at<double>(0,2) = offsetX;
+H2.at<double>(1,2) = offsetY;
+warpPerspective(src, dst, H2*H, size_warp);
+}
+///////////////////////////////////////////8888888888888888
 
 
 static const std::string OPENCV_WINDOW = "Image window";
@@ -60,12 +74,6 @@ static const std::string OPENCV_WINDOW = "Image window";
 class ImageConverter
    {
      ros::NodeHandle nh_;
-     ros::NodeHandle n;
-     ros::NodeHandle ns;
-     ros::Publisher chatter_pub = n.advertise<marvel_v_0_1::obstacle_avoidance>("obstacle_data", 1000);
-     ros::Subscriber sub = n.subscribe("guidance_pack", 1000, obstacle_subscribe_callback);
-
-     float value,value1,value2,value3;
      image_transport::ImageTransport it_;
      image_transport::Subscriber image_sub_;
      image_transport::Publisher image_pub_;
@@ -114,7 +122,7 @@ class ImageConverter
      
       void imageCb_d(const sensor_msgs::ImageConstPtr& msg)
   {
-    	 std::ofstream myfile ("output.txt");
+
 	double source_po_x=0;
 	double source_po_y=0;
 	double source_po_z=0;
@@ -179,7 +187,7 @@ class ImageConverter
 	//printf ("100,100 value: %d \n", blur_img.at<unsigned char>(100,100));
 	//printf ("100,100 value: %f \n", cv_ptr->image.at<float>(100,100));
 	//printf ("column: %d \n",cv_ptr->image.cols);
-    //printf ("row: %d \n",cv_ptr->image.rows);
+	//printf ("row: %d \n",cv_ptr->image.rows);
 	
 	for(int i=0;i<cv_ptr->image.rows;i++)
 	{
@@ -196,16 +204,16 @@ class ImageConverter
 		
 		}
 	}
-    source_po_x = source_po_x / ((double)(cv_ptr->image.rows * cv_ptr->image.cols)) + vx_uni;
-    source_po_y = source_po_y / ((double)(cv_ptr->image.rows * cv_ptr->image.cols)) + vy_uni;
-    source_po_z = source_po_z / ((double)(cv_ptr->image.rows * cv_ptr->image.cols)) + vz_uni;
-
-
+	source_po_x = source_po_x / ((double)(cv_ptr->image.rows * cv_ptr->image.cols)) + 1.0;
+	source_po_y = source_po_y / ((double)(cv_ptr->image.rows * cv_ptr->image.cols));
+	source_po_z = source_po_z / ((double)(cv_ptr->image.rows * cv_ptr->image.cols));
+//	printf ("X: %f \n", source_po_x);
+//	printf ("Y: %f \n", source_po_y);
+//	printf ("Z: %f \n", source_po_z);
 	
-
-	 
-	 
-	 //int fontFace = cv::FONT_HERSHEY_COMPLEX_SMALL;
+	    rotate(blur_img,180,blur_img);
+	
+		 //int fontFace = cv::FONT_HERSHEY_COMPLEX_SMALL;
        double fontScale = 1.5;
        int thickness = 2;
        //cv::Point textOrg(imgW/5, imgH/1.2);
@@ -220,33 +228,31 @@ class ImageConverter
        cv::putText(blur_img, str, cv::Point(10,30),  cv::FONT_HERSHEY_COMPLEX_SMALL, fontScale, cv::Scalar::all(255), thickness,4);
 	   str=stry.str();
 		cv::putText(blur_img, str, cv::Point(10,60),  cv::FONT_HERSHEY_COMPLEX_SMALL, fontScale, cv::Scalar::all(255), thickness,4);
-		strz.str();
+		str=strz.str();
 		cv::putText(blur_img, str, cv::Point(10,90),  cv::FONT_HERSHEY_COMPLEX_SMALL, fontScale, cv::Scalar::all(255), thickness,4);
+    
+		//std::ostringstream strlog;
+	   //strlog<<source_po_x<<" ; "<<source_po_y<<" ; "<<source_po_z<<" \n ";
+    logger<<source_po_x<<" ; "<<source_po_y<<" ; "<<source_po_z<<" \n ";
 		
-	   cv::imshow( "OPENCV_WINDOW", blur_img);
+		cv::imshow( "OPENCV_WINDOW", blur_img);
 	   std::ostringstream framex;
 	   framex<< "im"<<frame<<".jpg";
 	   std::cout<<  framex.str();
 	   cv::imwrite(framex.str(),blur_img);
 	   frame=frame+1;
 	
-
 	
-    value=source_po_x;
-    value1=source_po_y;
-    value2=source_po_z;
-    vdata.vx=value;
-    vdata.vy=value1;
-    vdata.vz=value2;
-    chatter_pub.publish(vdata);
-    ros::spinOnce();
-
-
-    //cv::imshow("Blur", blur_img);
+		
+		
+    cv::imshow("Blur", blur_img);
+    
+    
+    
     //cv::imshow("Depth", cv_ptr->image);
 
 
-    cv::waitKey(10);
+    cv::waitKey(1);
 
     //image_pub_.publish(cv_ptr->toImageMsg());
   }
@@ -258,35 +264,12 @@ class ImageConverter
 
    int main(int argc, char** argv)
    {
-       printf( " ********************************************** \n" );
-       printf( " ********************************************** \n" );
-       printf( " *                                            * \n" );
-       printf( " *                                            * \n" );
-       printf( " *                                            * \n" );
-       printf( " *                                            * \n" );
-       printf( " *                                            * \n" );
-       printf( " *                                            * \n" );
-       printf( " *                                            * \n" );
-       printf( " *     This program debug and Develop by      * \n" );
-       printf( " *          Mohammad Hossein Kazemi           * \n" );
-       printf( " *               Ali Jameie                   * \n" );
-       printf( " *               Ali Honari                   * \n" );
-       printf( " *        All Right reserved 2015-2016        * \n" );
-       printf( " *      Email:Mhkazemi_engineer@yahoo.com     * \n" );
-       printf( " *        Email:Celarco.Group@Gmail.com       * \n" );
-       printf( " *        Email:Honari.ali@Gmail.com          * \n" );
-       printf( " *     AmirKabir University of Technology     * \n" );
-       printf( " *   AUT-MAV AUTONOMOUS AIRIAL VEHICLE TEAM   * \n" );
-       printf( " *                                            * \n" );
-       printf( " *                                            * \n" );
-       printf( " *                                            * \n" );
-       printf( " *                                            * \n" );
-       printf( " ********************************************** \n" );
-       printf( " ********************************************** \n" );
      ros::init(argc, argv, "image_converter");
-     ros::init(argc, argv, "obstacle_detection");
-
      ImageConverter ic;
+	
+	 logger.open("POTLOG.txt");
+	 logger<<" X ; Y ; Z  \n";
+	
      ros::spin();
      return 0;
    }

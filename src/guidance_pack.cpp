@@ -20,31 +20,32 @@ horizontal_mode g_horizontal_mode;
 heading_mode g_heading_mode;
 lock_param g_lock_param;
 
-int quality;
+int quality = 0;
 
 float v_x_setpoint = 0, v_y_setpoint = 0, v_z_setpoint = 0;
-float v_x, v_y, v_z;
+float v_x = 0, v_y = 0, v_z = 0;
 
 float heading_setpoint = 0;
-float heading;
+float heading = 0;
 
 float height_setpoint = 0;
-float height;
+float height = 0;
 
 float rate_setpoint = 0;
-float rate;
+float rate = 0;
 
-float rotate_break_cond;
-float move_oa_break_cond;
+float rotate_break_cond = 0;
+float move_oa_break_cond = 0;
 
-float window_deltax,window_deltay,window_pitch;
+float window_deltax = 0, window_deltay = 0, window_pitch = 0;
 
-float obstacle_vx_setpoint,obstacle_vy_setpoint,obstacle_vz_setpoint,obstacle_psi_setpoint;
-bool armed;
+float obstacle_vx_setpoint = 0, obstacle_vy_setpoint = 0, obstacle_vz_setpoint = 0 ,obstacle_psi_setpoint = 0;
+bool armed = false;
 bool server_ready = false;
 
 pid pid_x, pid_y, pid_z, pid_h;
 
+float nominal_hover_throttle = 45.0;
 //
 // Flight plan variables
 //
@@ -228,7 +229,8 @@ int main(int argc, char **argv) {
 	// Autopilot initialization
 	//
 	guidance_msg.arm = 1;
-	guidance_msg.mode = 20;                        //50 change to 20
+	guidance_msg.mode = 100;
+	pid_z.set_max_sum(3.0);
 	heading_setpoint = heading;
 	//
     // Guidance loop
@@ -255,8 +257,7 @@ int main(int argc, char **argv) {
 				f[current_function_no].done = true;
 				g_vertical_mode = VERTICAL_HOLD;
 			}
-				
-        break;
+		break;
 
         case hold_position:
             g_vertical_mode = VERTICAL_HOLD;
@@ -353,18 +354,18 @@ int main(int argc, char **argv) {
 		//
         switch(g_vertical_mode) {
         case VERTICAL_HOLD:
-			pid_z.set_coeff(0.4,0);
-			guidance_msg.throttle = 100 * pid_z.loop_once((height_setpoint - height),0) + 50;
+			pid_z.set_coeff(0.4,0.02,0);
+			guidance_msg.throttle = 100 * pid_z.loop_once((height_setpoint - height),0) + nominal_hover_throttle;
         break;
 
         case VERTICAL_LOCK:
-			pid_z.set_coeff(0.8,0);
-			guidance_msg.throttle = 100 * pid_z.loop_once((v_z_setpoint - v_z),0) + 50;
+			pid_z.set_coeff(0,0,0.02);
+			guidance_msg.throttle = 100 * pid_z.loop_once(0,(v_z_setpoint - v_z)) + nominal_hover_throttle;
 
         break;
         case VERTICAL_CLIMB:
-			pid_z.set_coeff(0.25,0);
-			guidance_msg.throttle = 100 * pid_z.loop_once((v_z_setpoint - v_z),0) +50 ;   
+			pid_z.set_coeff(0,0.02,0.25);
+			guidance_msg.throttle = 100 * pid_z.loop_once(0,(v_z_setpoint - v_z)) + nominal_hover_throttle ;   
 		break;
         }
 		//
@@ -372,34 +373,34 @@ int main(int argc, char **argv) {
 		//
 		switch(g_horizontal_mode) {
 		case HORIZONTAL_HOLD:
-			pid_x.set_coeff(1,0);
+			pid_x.set_coeff(0,0,1);
 			if(((0 - v_x) >= 0.01) || ((0 - v_x) <= -0.01)) {
-				guidance_msg.roll = 100 * pid_x.loop_once((0 - v_x),0);
+				guidance_msg.roll = 100 * pid_x.loop_once(0,(0 - v_x));
 			}
 			else if (((0 - v_x) <= 0.01) || ((0 - v_x) >= -0.01)) {
 				guidance_msg.roll = 0;
 			}
 			
-			pid_y.set_coeff(1,0);
+			pid_y.set_coeff(0,0,1);
 			if(((0 - v_y) >= 0.01) || ((0 - v_y) <= -0.01)) {
-				guidance_msg.pitch = 100 * pid_y.loop_once((0 - v_y),0);
+				guidance_msg.pitch = 100 * pid_y.loop_once(0,(0 - v_y));
 			}
 			else if (((0 - v_y) <= 0.01) || ((0 - v_y) >= -0.01)) {
 				guidance_msg.pitch = 0;
 			}
 		break;
 		case HORIZONTAL_LOCK:
-			pid_x.set_coeff(1,0);
+			pid_x.set_coeff(0,0,1);
 			if(((v_x_setpoint - v_x) >= 0.01) || ((v_x_setpoint - v_x) <= -0.01)) {
-				guidance_msg.roll = 100 * pid_x.loop_once((v_x_setpoint - v_x),0);
+				guidance_msg.roll = 100 * pid_x.loop_once(0,(v_x_setpoint - v_x));
 			}
 			else if (((v_x_setpoint - v_x) <= 0.01) || ((v_x_setpoint - v_x) >= -0.01)) {
 				guidance_msg.roll = 0;
 			}
 			
-			pid_y.set_coeff(1,0);
+			pid_y.set_coeff(0,0,1);
 			if(((v_y_setpoint - v_y) >= 0.01) || ((v_y_setpoint - v_y) <= -0.01)) {
-				guidance_msg.pitch = 100 * pid_y.loop_once((v_y_setpoint - v_y),0);
+				guidance_msg.pitch = 100 * pid_y.loop_once(0,(v_y_setpoint - v_y));
 			}
 			else if (((v_y_setpoint - v_y) <= 0.01) || ((v_y_setpoint - v_y) >= -0.01)) {
 				guidance_msg.pitch = 0;
@@ -414,7 +415,7 @@ int main(int argc, char **argv) {
 		//
 		switch(g_heading_mode) {
 		case HEADING_HOLD:
-			pid_h.set_coeff(0.007,0);
+			pid_h.set_coeff(0.007,0,0);
 			guidance_msg.yaw = 100 * pid_h.loop_once((heading_setpoint-heading),0);
 		break;
 		case HEADING_LOCK:
@@ -424,7 +425,7 @@ int main(int argc, char **argv) {
 		
 		break;
 		}
-		std::cout << current_function_no << std::endl;
+		//std::cout << current_function_no << std::endl;
         std::cout << guidance_msg.roll << " " << guidance_msg.pitch << " " << guidance_msg.throttle << " " << guidance_msg.yaw << " " << std::endl;
         ros::spinOnce();
         pub.publish(guidance_msg);
