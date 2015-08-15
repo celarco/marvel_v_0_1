@@ -8,9 +8,16 @@
 #define MAX_FUNCTION_COUNT 100
 #define MAX_FUNCTION_ARG_COUNT 5
 
-enum function_type { khar = 1,
-                     sag,
-                     gaav
+enum function_type { take_off = 1,
+                     hold_position,
+                     set_heading,
+                     heading_lock,
+                     heading_unlock,
+                     rotate,
+                     move_oa,
+                     move,
+                     go,
+                     go_oa
 
 };
 
@@ -23,6 +30,7 @@ struct function {
 struct block {
     unsigned short int start_function_number;
     std::string name;
+    unsigned short int id;
 };
 
 

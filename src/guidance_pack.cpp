@@ -32,6 +32,7 @@ bool initialize_flight_plan() {
             if (c == "block") {
                 unsigned short int n;
                 stream >> n;
+                b[block_count].id = n;
                 std::string name;
                 stream >> name;
                 b[block_count].name = name;
@@ -41,9 +42,16 @@ bool initialize_flight_plan() {
             else if (c == "function") {
                 std::string type;
                 stream >> type;
-                if (type == "khar") f[function_count].type = khar;
-                if (type == "sag") f[function_count].type = sag;
-                if (type == "gaav") f[function_count].type = gaav;
+                if (type == "take_off") f[function_count].type = take_off;
+                if (type == "hold_position") f[function_count].type = hold_position;
+                if (type == "set_heading") f[function_count].type = set_heading;
+                if (type == "heading_lock") f[function_count].type = heading_lock;
+                if (type == "heading_unlock") f[function_count].type = heading_unlock;
+                if (type == "rotate") f[function_count].type = rotate;
+                if (type == "move_oa") f[function_count].type = move_oa;
+                if (type == "move") f[function_count].type = move;
+                if (type == "go") f[function_count].type = go;
+                if (type == "go_oa") f[function_count].type = go_oa;
                 function_count ++;
             }
         }
@@ -52,11 +60,11 @@ bool initialize_flight_plan() {
         //
         std::cout << "Blocks are :" << std::endl;
         for(int i = 0 ;i < block_count;i++) {
-            std::cout << "Block No. " << i << " : " << b[i].name <<" with start function No. " << b[i].start_function_number << std::endl;
+            std::cout << "Block No. " << b[i].id << " : " << b[i].name <<" with start function No. " << b[i].start_function_number << std::endl << std::endl;
         }
         std::cout << "Functions are :" << std::endl;
         for(int i = 0 ;i < function_count;i++) {
-            std::cout << "Function No. " << i << " of type: " << f[i].type << std::endl;
+            std::cout << "Function No. " << i << " of type: " << f[i].type << std::endl << std::endl;
         }
         file.close();
         return true;
