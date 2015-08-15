@@ -1,0 +1,14 @@
+<package>
+  <description brief="marvel_v_0_1">
+
+     marvel_v_0_1
+
+  </description>
+  <author>celarco</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/marvel_v_0_1</url>
+  <depend package="roscpp"/>
+</package>
+
+
