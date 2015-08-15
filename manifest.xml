@@ -4,11 +4,14 @@
      marvel_v_0_1
 
   </description>
-  <author>celarco</author>
+  <author>celarco-TIR4N4Z0R05</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/marvel_v_0_1</url>
   <depend package="roscpp"/>
+  <depend package="rospy"/>
+  <depend package="std_msgs"/>
+  
 </package>
 
 
