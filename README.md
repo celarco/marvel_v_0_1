@@ -1,2 +1,2 @@
 # marvel_v_0_1
-This package in development and not finished 
+This package is still under development... 

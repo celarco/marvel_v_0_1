@@ -11,6 +11,7 @@ include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/include/mavlink)
+
 rosbuild_init()
 
 #set the default path for built executables to the "bin" directory
@@ -33,11 +34,8 @@ rosbuild_genmsg()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 rosbuild_add_executable(guidance_pack ${GUIDANCE_PACK_SRCS})
 rosbuild_add_executable(optical_flow src/optical_flow.cpp)
-rosbuild_add_executable(qr_cod src/qr_cod.cpp)
+#rosbuild_add_executable(qr_code src/qr_code.cpp)
 
-
-
-
-target_link_libraries (qr_cod  ${ZBAR_LIBRARIES}    ${OpenCV_LIBS} zbar)
+#target_link_libraries (qr_code ${ZBAR_LIBRARIES} ${OpenCV_LIBS} zbar)
 
 #target_link_libraries(example ${PROJECT_NAME})

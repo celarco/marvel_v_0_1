@@ -14,6 +14,15 @@
   <depend package="rospy"/>
   <depend package="std_msgs"/>
   <depend package="nav_msgs"/>
+	  
+	  
+  
+  
+  
+  
+  
+  
+  
 </package>
 
 

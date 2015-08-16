@@ -8,6 +8,10 @@
 #include <ros/ros.h>
 #include <marvel_v_0_1/OpticalFlow.h>
 //
+// Guidance variables
+//
+unsigned short int g_vertical_mode, g_horizontal_mode, g_heading_mode;
+//
 // Flight plan variables
 //
 function f[MAX_FUNCTION_COUNT];
@@ -42,9 +46,25 @@ bool initialize_flight_plan() {
             else if (c == "function") {
                 std::string type;
                 stream >> type;
-                if (type == "take_off") f[function_count].type = take_off;
-                if (type == "hold_position") f[function_count].type = hold_position;
-                if (type == "set_heading") f[function_count].type = set_heading;
+                if (type == "take_off") {
+                    f[function_count].type = take_off;
+                    f[function_count].v_mode = VERTICAL_CLIMB;
+                    f[function_count].h_mode = HORIZONTAL_HOLD;
+                    f[function_count].head_mode = HEADING_HOLD;
+                }
+                if (type == "hold_position") {
+                    f[function_count].type = hold_position;
+                    f[function_count].v_mode = VERTICAL_HOLD;
+                    f[function_count].h_mode = HORIZONTAL_HOLD;
+                    f[function_count].head_mode = HEADING_HOLD;
+                }
+                if (type == "set_heading") {
+                    f[function_count].type = set_heading;
+                    f[function_count].v_mode = VERTICAL_HOLD;
+                    f[function_count].h_mode = HORIZONTAL_HOLD;
+                    f[function_count].head_mode = HEADING_RATE;
+                }
+
                 if (type == "heading_lock") f[function_count].type = heading_lock;
                 if (type == "heading_unlock") f[function_count].type = heading_unlock;
                 if (type == "rotate") f[function_count].type = rotate;
@@ -52,6 +72,11 @@ bool initialize_flight_plan() {
                 if (type == "move") f[function_count].type = move;
                 if (type == "go") f[function_count].type = go;
                 if (type == "go_oa") f[function_count].type = go_oa;
+                for(int i = 0; i < MAX_FUNCTION_ARG_COUNT; i++) {
+                    float arg;
+                    stream >> arg;
+                    f[function_count].arg[i] = arg;
+                }
                 function_count ++;
             }
         }
@@ -59,12 +84,12 @@ bool initialize_flight_plan() {
         // Printing functions and blocks to verify
         //
         std::cout << "Blocks are :" << std::endl;
-        for(int i = 0 ;i < block_count;i++) {
-            std::cout << "Block No. " << b[i].id << " : " << b[i].name <<" with start function No. " << b[i].start_function_number << std::endl << std::endl;
+        for(int i = 0; i < block_count; i++) {
+            std::cout << "Block No. " << b[i].id << " : " << b[i].name <<" with start function No. " << b[i].start_function_number << std::endl;
         }
         std::cout << "Functions are :" << std::endl;
-        for(int i = 0 ;i < function_count;i++) {
-            std::cout << "Function No. " << i << " of type: " << f[i].type << std::endl << std::endl;
+        for(int i = 0; i < function_count; i++) {
+            std::cout << "Function No. " << i << " of type: " << f[i].type << std::endl;
         }
         file.close();
         return true;
@@ -108,6 +133,8 @@ int main(int argc, char **argv) {
     // Guidance loop
     //
     while(1) {
+        if(f[current_function_no].done == true) current_function_no ++;
+
         ros::spinOnce();
     }
 
