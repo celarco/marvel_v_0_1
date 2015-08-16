@@ -1,5 +1,8 @@
-cmake_minimum_required(VERSION 2.4.6)
+cmake_minimum_required(VERSION 2.4.8)
+find_package( OpenCV REQUIRED )
 include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+project( QRCode )
+
 
 # Set the build type.  Options are:
 #  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
@@ -33,11 +36,13 @@ rosbuild_genmsg()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 rosbuild_add_executable(guidance_pack ${GUIDANCE_PACK_SRCS})
 rosbuild_add_executable(optical_flow src/optical_flow.cpp)
-rosbuild_add_executable(qr_cod src/qr_cod.cpp)
+rosbuild_add_executable(qr_code src/qr_code.cpp)
+
+
+target_link_libraries (qr_code  ${ZBAR_LIBRARIES}    ${OpenCV_LIBS} zbar)
 
 
 
 
-target_link_libraries (qr_cod  ${ZBAR_LIBRARIES}    ${OpenCV_LIBS} zbar)
 
 #target_link_libraries(example ${PROJECT_NAME})
