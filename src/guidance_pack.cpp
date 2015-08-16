@@ -15,7 +15,11 @@ horizontal_mode g_horizontal_mode;
 heading_mode g_heading_mode;
 float v_x_setpoint = 0, v_y_setpoint = 0, v_z_setpoint = 0;
 float heading_setpoint = 0;
-
+float height_setpoint = 0;
+float heading_lock_param;
+float horizontal_lock_param;
+float vertical_lock_param;
+float move_oa_break_cond;
 //
 // Flight plan variables
 //
@@ -51,72 +55,22 @@ bool initialize_flight_plan() {
             else if (c == "function") {
                 std::string type;
                 stream >> type;
-                if (type == "take_off") {
-                    f[function_count].type = take_off;
-                    f[function_count].v_mode = VERTICAL_CLIMB;
-                    f[function_count].h_mode = HORIZONTAL_HOLD;
-                    f[function_count].head_mode = HEADING_HOLD;
-                }
-                if (type == "hold_position") {
-                    f[function_count].type = hold_position;
-                    f[function_count].v_mode = VERTICAL_HOLD;
-                    f[function_count].h_mode = HORIZONTAL_HOLD;
-                    f[function_count].head_mode = HEADING_HOLD;
-                }
-                if (type == "set_heading") {
-                    f[function_count].type = set_heading;
-                    f[function_count].v_mode = VERTICAL_IDLE;
-                    f[function_count].h_mode = HORIZONTAL_IDLE;
-                    f[function_count].head_mode = HEADING_RATE;
-                }
-
-                if (type == "heading_lock") {
-                    f[function_count].type = heading_lock;
-                    f[function_count].v_mode = VERTICAL_IDLE;
-                    f[function_count].h_mode = HORIZONTAL_IDLE;
-                    f[function_count].head_mode = HEADING_LOCK;
-                }
-                if (type == "heading_unlock") {
-                    f[function_count].type = heading_unlock;
-                    f[function_count].v_mode = VERTICAL_IDLE;
-                    f[function_count].h_mode = HORIZONTAL_IDLE;
-                    f[function_count].head_mode = HEADING_IDLE;
-                }
-                if (type == "rotate") {
-                    f[function_count].type = rotate;
-                    f[function_count].v_mode = VERTICAL_IDLE;
-                    f[function_count].h_mode = HORIZONTAL_IDLE;
-                    f[function_count].head_mode = HEADING_RATE;
-                }
-                if (type == "move_oa") {
-                    f[function_count].type = move_oa;
-                    f[function_count].v_mode = VERTICAL_HOLD;
-                    f[function_count].h_mode = HORIZONTAL_VELOCITY;
-                    f[function_count].head_mode = HEADING_IDLE;
-                }
-                if (type == "move") {
-                    f[function_count].type = move;
-                    f[function_count].v_mode = VERTICAL_HOLD;
-                    f[function_count].h_mode = HORIZONTAL_VELOCITY;
-                    f[function_count].head_mode = HEADING_IDLE;
-                }
-                if (type == "go") {
-                    f[function_count].type = go;
-                    f[function_count].v_mode = VERTICAL_LOCK;
-                    f[function_count].h_mode = HORIZONTAL_LOCK;
-                    f[function_count].head_mode = HEADING_IDLE;
-                }
-                if (type == "go_oa") {
-                    f[function_count].type = go_oa;
-                    f[function_count].v_mode = VERTICAL_LOCK;
-                    f[function_count].h_mode = HORIZONTAL_LOCK;
-                    f[function_count].head_mode = HEADING_IDLE;
-                }
                 for(int i = 0; i < MAX_FUNCTION_ARG_COUNT; i++) {
                     float arg;
                     stream >> arg;
                     f[function_count].arg[i] = arg;
                 }
+                if (type == "take_off") f[current_function_no].type = take_off;
+                if (type == "hold_position") f[current_function_no].type = hold_position;
+                if (type == "set_heading") f[current_function_no].type = set_heading;
+                if (type == "heading_lock") f[current_function_no].type = heading_lock;
+                if (type == "heading_unlock") f[current_function_no].type = heading_unlock;
+                if (type == "rotate") f[current_function_no].type = rotate;
+                if (type == "move_oa") f[current_function_no].type = move_oa;
+                if (type == "move") f[current_function_no].type = move;
+                if (type == "go") f[current_function_no].type = go;
+                if (type == "go_oa") f[current_function_no].type = go_oa;
+
                 function_count ++;
             }
         }
@@ -177,9 +131,67 @@ int main(int argc, char **argv) {
         // Handle function characteristics
         //
         if(f[current_function_no].done == true) current_function_no ++;
-        g_vertical_mode = f[current_function_no].v_mode;
-        g_horizontal_mode = f[current_function_no].h_mode;
-        g_heading_mode = f[current_function_no].head_mode;
+        if (f[current_function_no].type = take_off) {
+
+            g_vertical_mode = VERTICAL_CLIMB;
+            g_horizontal_mode = HORIZONTAL_HOLD;
+            g_heading_mode = HEADING_HOLD;
+        }
+        if (f[current_function_no].type = hold_position) {
+
+            g_vertical_mode = VERTICAL_HOLD;
+            g_horizontal_mode = HORIZONTAL_HOLD;
+            g_heading_mode = HEADING_HOLD;
+        }
+        if (f[current_function_no].type = set_heading) {
+
+            g_vertical_mode = VERTICAL_IDLE;
+            g_horizontal_mode = HORIZONTAL_IDLE;
+            g_heading_mode = HEADING_RATE;
+        }
+
+        if (f[current_function_no].type = heading_lock) {
+
+            g_vertical_mode = VERTICAL_IDLE;
+            g_horizontal_mode = HORIZONTAL_IDLE;
+            g_heading_mode = HEADING_LOCK;
+        }
+        if (f[current_function_no].type = heading_unlock) {
+
+            g_vertical_mode = VERTICAL_IDLE;
+            g_horizontal_mode = HORIZONTAL_IDLE;
+            g_heading_mode = HEADING_IDLE;
+        }
+        if (f[current_function_no].type = rotate) {
+
+            g_vertical_mode = VERTICAL_IDLE;
+            g_horizontal_mode = HORIZONTAL_IDLE;
+            g_heading_mode = HEADING_RATE;
+        }
+        if (f[current_function_no].type = move_oa) {
+
+            g_vertical_mode = VERTICAL_HOLD;
+            g_horizontal_mode = HORIZONTAL_VELOCITY;
+            g_heading_mode = HEADING_IDLE;
+        }
+        if (f[current_function_no].type = move) {
+
+            g_vertical_mode = VERTICAL_HOLD;
+            g_horizontal_mode = HORIZONTAL_VELOCITY;
+            g_heading_mode = HEADING_IDLE;
+        }
+        if (f[current_function_no].type = go) {
+
+            g_vertical_mode = VERTICAL_LOCK;
+            g_horizontal_mode = HORIZONTAL_LOCK;
+            g_heading_mode = HEADING_IDLE;
+        }
+        if (f[current_function_no].type = go_oa) {
+
+            g_vertical_mode = VERTICAL_LOCK;
+            g_horizontal_mode = HORIZONTAL_LOCK;
+            g_heading_mode = HEADING_IDLE;
+        }
 
         ros::spinOnce();
     }

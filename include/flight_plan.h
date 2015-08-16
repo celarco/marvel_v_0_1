@@ -26,9 +26,6 @@ struct function {
     function_type type;
     float arg[MAX_FUNCTION_ARG_COUNT];
     bool done = false;
-    vertical_mode v_mode;
-    horizontal_mode h_mode;
-    heading_mode head_mode;
 };
 
 struct block {
