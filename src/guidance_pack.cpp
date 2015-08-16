@@ -10,7 +10,12 @@
 //
 // Guidance variables
 //
-unsigned short int g_vertical_mode, g_horizontal_mode, g_heading_mode;
+vertical_mode g_vertical_mode;
+horizontal_mode g_horizontal_mode;
+heading_mode g_heading_mode;
+float v_x_setpoint = 0, v_y_setpoint = 0, v_z_setpoint = 0;
+float heading_setpoint = 0;
+
 //
 // Flight plan variables
 //
@@ -85,11 +90,28 @@ bool initialize_flight_plan() {
                 }
                 if (type == "move_oa") {
                     f[function_count].type = move_oa;
-
+                    f[function_count].v_mode = VERTICAL_HOLD;
+                    f[function_count].h_mode = HORIZONTAL_VELOCITY;
+                    f[function_count].head_mode = HEADING_IDLE;
                 }
-                if (type == "move") f[function_count].type = move;
-                if (type == "go") f[function_count].type = go;
-                if (type == "go_oa") f[function_count].type = go_oa;
+                if (type == "move") {
+                    f[function_count].type = move;
+                    f[function_count].v_mode = VERTICAL_HOLD;
+                    f[function_count].h_mode = HORIZONTAL_VELOCITY;
+                    f[function_count].head_mode = HEADING_IDLE;
+                }
+                if (type == "go") {
+                    f[function_count].type = go;
+                    f[function_count].v_mode = VERTICAL_LOCK;
+                    f[function_count].h_mode = HORIZONTAL_LOCK;
+                    f[function_count].head_mode = HEADING_IDLE;
+                }
+                if (type == "go_oa") {
+                    f[function_count].type = go_oa;
+                    f[function_count].v_mode = VERTICAL_LOCK;
+                    f[function_count].h_mode = HORIZONTAL_LOCK;
+                    f[function_count].head_mode = HEADING_IDLE;
+                }
                 for(int i = 0; i < MAX_FUNCTION_ARG_COUNT; i++) {
                     float arg;
                     stream >> arg;
@@ -151,7 +173,13 @@ int main(int argc, char **argv) {
     // Guidance loop
     //
     while(1) {
+        //
+        // Handle function characteristics
+        //
         if(f[current_function_no].done == true) current_function_no ++;
+        g_vertical_mode = f[current_function_no].v_mode;
+        g_horizontal_mode = f[current_function_no].h_mode;
+        g_heading_mode = f[current_function_no].head_mode;
 
         ros::spinOnce();
     }
