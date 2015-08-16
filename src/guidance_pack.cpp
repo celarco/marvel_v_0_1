@@ -60,15 +60,33 @@ bool initialize_flight_plan() {
                 }
                 if (type == "set_heading") {
                     f[function_count].type = set_heading;
-                    f[function_count].v_mode = VERTICAL_HOLD;
-                    f[function_count].h_mode = HORIZONTAL_HOLD;
+                    f[function_count].v_mode = VERTICAL_IDLE;
+                    f[function_count].h_mode = HORIZONTAL_IDLE;
                     f[function_count].head_mode = HEADING_RATE;
                 }
 
-                if (type == "heading_lock") f[function_count].type = heading_lock;
-                if (type == "heading_unlock") f[function_count].type = heading_unlock;
-                if (type == "rotate") f[function_count].type = rotate;
-                if (type == "move_oa") f[function_count].type = move_oa;
+                if (type == "heading_lock") {
+                    f[function_count].type = heading_lock;
+                    f[function_count].v_mode = VERTICAL_IDLE;
+                    f[function_count].h_mode = HORIZONTAL_IDLE;
+                    f[function_count].head_mode = HEADING_LOCK;
+                }
+                if (type == "heading_unlock") {
+                    f[function_count].type = heading_unlock;
+                    f[function_count].v_mode = VERTICAL_IDLE;
+                    f[function_count].h_mode = HORIZONTAL_IDLE;
+                    f[function_count].head_mode = HEADING_IDLE;
+                }
+                if (type == "rotate") {
+                    f[function_count].type = rotate;
+                    f[function_count].v_mode = VERTICAL_IDLE;
+                    f[function_count].h_mode = HORIZONTAL_IDLE;
+                    f[function_count].head_mode = HEADING_RATE;
+                }
+                if (type == "move_oa") {
+                    f[function_count].type = move_oa;
+
+                }
                 if (type == "move") f[function_count].type = move;
                 if (type == "go") f[function_count].type = go;
                 if (type == "go_oa") f[function_count].type = go_oa;
