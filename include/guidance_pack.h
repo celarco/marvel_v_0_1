@@ -4,23 +4,20 @@
 enum vertical_mode {
     VERTICAL_HOLD,
     VERTICAL_LOCK,
-    VERTICAL_CLIMB,
-    VERTICAL_IDLE
+    VERTICAL_CLIMB
 };
 
 enum horizontal_mode {
     HORIZONTAL_HOLD,
     HORIZONTAL_LOCK,
     HORIZONTAL_CLIMB,
-    HORIZONTAL_VELOCITY,
-    HORIZONTAL_IDLE
+    HORIZONTAL_VELOCITY
 };
 
 enum heading_mode {
     HEADING_HOLD,
     HEADING_LOCK,
-    HEADING_RATE,
-    HEADING_IDLE
+    HEADING_RATE
 };
 
 #endif
