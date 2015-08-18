@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.4.8)
 find_package( OpenCV REQUIRED )
 include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
-project( QRCode )
+project( marvel_v_0_1 )
 
 
 # Set the build type.  Options are:
@@ -27,7 +27,7 @@ set(GUIDANCE_PACK_SRCS
 #uncomment if you have defined messages
 rosbuild_genmsg()
 #uncomment if you have defined services
-#rosbuild_gensrv()
+rosbuild_gensrv()
 
 #common commands for building c++ executables and libraries
 #rosbuild_add_library(${PROJECT_NAME} src/example.cpp)

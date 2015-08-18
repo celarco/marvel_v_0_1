@@ -6,8 +6,8 @@
  #include "ros/ros.h"
  #include "std_msgs/String.h"
  #include <string>
- 
- 
+ #include "marvel_v_0_1/qr_kill.h"
+
   
  using namespace cv;  
  using namespace std;  
@@ -17,10 +17,32 @@
  
   
  //g++ main.cpp /usr/local/include/ /usr/local/lib/ -lopencv_highgui.2.4.8 -lopencv_core.2.4.8  
- 
+ int x,y;
  
  
  marvel_v_0_1::QRms vdata;
+ 
+ // using namespace std
+   bool add(marvel_v_0_1::qr_kill::Request  &req, marvel_v_0_1::qr_kill::Response &res)
+            
+    {
+      res.sum = req.a + req.b;
+      ROS_INFO("request: x=%ld, y=%ld", (long int)req.a, (long int)req.b);
+      ROS_INFO("sending back response: [%ld]", (long int)res.sum);
+        x=req.a;
+        y=req.b;
+       
+    std:: cout << "kill programm" <<  endl <<  "kill programm " << endl ;
+    
+   //   if (req.a==1 && req.b==1)
+     
+      if (x==1 && y==1)
+      return false;
+      
+       
+     return true;
+   }
+ 
  
  
  
@@ -34,10 +56,12 @@
    printf( " *                                            * \n" );
    printf( " *                                            * \n" );
    printf( " *                                            * \n" );
-   printf( " *       This program is Developed by         * \n" );
-   printf( " *          Mohammad Hossein Kazemi           * \n" );
+   printf( " *     This program debug and Develop by      * \n" );
+   printf( " *            Mohammad Hossein Kazemi         * \n" );
+   printf( " *                Ali Jameei                  * \n" );
    printf( " *        All Right reserved 2015-2016        * \n" );
-   printf( " *      Email:Mhkazemi_engineer@yahoo.com     * \n" );
+   printf( " *      Email:Mhkazemi_Engineer@yahoo.com     * \n" );
+   printf( " *        Email:Celarco.Group@gmail.com       * \n" ); 
    printf( " *     AmirKabir University of Technology     * \n" );
    printf( " *                                            * \n" );
    printf( " *                                            * \n" );
@@ -46,7 +70,7 @@
    printf( " ********************************************** \n" );
    
 
-   VideoCapture cap(1); // open the video camera  
+   VideoCapture cap(0); // open the video camera  
 
    
    if (!cap.isOpened()) // if not success, exit program  
@@ -65,13 +89,28 @@
    
    namedWindow("MyVideo",CV_WINDOW_AUTOSIZE); //create a window called "MyVideo"  
 
-      ros::init(argc, argv, "QRcode");
+      ros::init(argc, argv, "talker");
+      ros::init(argc, argv, "qr_kill");
       ros::NodeHandle n;
-      ros::Publisher chatter_pub = n.advertise<marvel_v_0_1::QRms>("MHData", 1000);
+      ros::ServiceServer run_service = n.advertiseService("qr_kill", add);
+     ROS_INFO("Set initialize data and configure system .");
+     ROS_INFO("Ready to Working!.");
+     
+   
+     
+     
+     
+      ros::Publisher chatter_pub = n.advertise<marvel_v_0_1::QRms>("MHData", 1000);  
       std::string Debug;
+      
+     
+      
     
+   
    while (1)  
    {  
+	    if (x==1 && y==1)
+        break;
 	   
      Mat frame;  
      bool bSuccess = cap.read(frame); // read a new frame from video  
@@ -136,6 +175,12 @@
      
      
    }  
+    if (x!=y){
+     ros::ServiceServer service = n.advertiseService("qr_kill", add);
+     ROS_INFO("Set initialize data and configure system .");
+     ROS_INFO("Ready to Working!.");
+     ros::spin();
+ }
    return 0;  
  }  
 
