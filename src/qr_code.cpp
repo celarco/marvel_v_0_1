@@ -46,7 +46,7 @@
    printf( " ********************************************** \n" );
    
 
-   VideoCapture cap(1); // open the video camera  
+   VideoCapture cap(0); // open the video camera  
 
    
    if (!cap.isOpened()) // if not success, exit program  
