@@ -34,7 +34,7 @@
    printf( " *                                            * \n" );
    printf( " *                                            * \n" );
    printf( " *                                            * \n" );
-   printf( " *     This program debug and Develop by      * \n" );
+   printf( " *       This program is Developed by         * \n" );
    printf( " *          Mohammad Hossein Kazemi           * \n" );
    printf( " *        All Right reserved 2015-2016        * \n" );
    printf( " *      Email:Mhkazemi_engineer@yahoo.com     * \n" );
@@ -67,7 +67,7 @@
 
       ros::init(argc, argv, "talker");
       ros::NodeHandle n;
-      ros::Publisher chatter_pub = n.advertise<marvel_v_0_1::QRms>("MHData", 1000);  
+      ros::Publisher chatter_pub = n.advertise<marvel_v_0_1::QRms>("MHData", 1000);
       std::string Debug;
     
    while (1)  
