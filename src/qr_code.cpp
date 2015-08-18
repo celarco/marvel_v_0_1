@@ -65,7 +65,7 @@
    
    namedWindow("MyVideo",CV_WINDOW_AUTOSIZE); //create a window called "MyVideo"  
 
-      ros::init(argc, argv, "talker");
+      ros::init(argc, argv, "QRcode");
       ros::NodeHandle n;
       ros::Publisher chatter_pub = n.advertise<marvel_v_0_1::QRms>("MHData", 1000);
       std::string Debug;

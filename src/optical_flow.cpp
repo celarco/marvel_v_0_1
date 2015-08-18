@@ -2,8 +2,6 @@
 #include <iostream>
 #include <pixhawk/mavlink.h>
 #include "ros/ros.h"
-#include "std_msgs/String.h"
-#include <sstream>
 #include <marvel_v_0_1/OpticalFlow.h>
 #include <time.h>
 #include <cmath>
@@ -84,8 +82,8 @@ void msg_resolve(uint8_t c) {
 //
 // Main program
 //
-int main(int argc, char **argv)
-{   //
+int main(int argc, char **argv) {
+    //
     // Port configuration
     //
     port.open("/dev/ttyACM0");
@@ -93,7 +91,7 @@ int main(int argc, char **argv)
     //
     // Ros configuration
     //
-    ros::init(argc, argv, "talker");
+    ros::init(argc, argv, "optical_flow");
     ros::NodeHandle n;
     ros::Publisher chatter_pub = n.advertise<marvel_v_0_1::OpticalFlow>("optical_flow", 1000);
     //
