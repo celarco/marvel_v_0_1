@@ -100,7 +100,7 @@
      
      
      
-      ros::Publisher chatter_pub = n.advertise<marvel_v_0_1::QRms>("MHData", 1000);  
+      ros::Publisher chatter_pub = n.advertise<marvel_v_0_1::QRms>("qr_data", 1000);  
       std::string Debug;
       
      
