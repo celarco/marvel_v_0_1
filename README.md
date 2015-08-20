@@ -6,7 +6,7 @@ prerequisits for running:
 
 for ubuntu 14.04 and lubuntu:
        
-                        sudo apt-get install libzbar
+                        sudo apt-get install libzbar-dev
                         
                         
       for install dependency of qr_code please follow below command:
