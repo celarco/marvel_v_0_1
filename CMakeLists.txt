@@ -41,16 +41,7 @@ rosbuild_add_executable(qr_code src/qr_code.cpp)
 rosbuild_add_executable(server src/server.cpp)
 rosbuild_add_executable(xtion_fpv src/xtion_fpv.cpp)
 rosbuild_add_executable(window_detector src/window_detector.cpp)
-
-
-
 rosbuild_add_executable(server src/server.cpp src/radio.cpp)
 
-
 target_link_libraries (qr_code  ${ZBAR_LIBRARIES}    ${OpenCV_LIBS} zbar)
-
-
-
-
-
 #target_link_libraries(example ${PROJECT_NAME})

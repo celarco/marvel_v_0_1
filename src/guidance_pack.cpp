@@ -154,8 +154,15 @@ int main(int argc, char **argv) {
     else {
         std::cout<<"Flight plan successfully initialized...!"<<std::endl;
     }
+	//
+	// Arming the quadcopter
+	//
 	guidance_msg.arm = 1;
-    //
+	guidance_msg.roll = -100.0;
+	guidance_msg.pitch = 100.0;
+	guidance_msg.throttle = 100.0;
+	guidance_msg.yaw = 0.0;
+	//
     // Guidance loop
     //
     while(1) {

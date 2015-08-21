@@ -152,8 +152,12 @@ void msg_receive(uint8_t c) {
 					rc.mode.rev = int(mavlink_msg_param_value_get_param_value(&msg));
 					break;
 					
-					case 4:
+					case 94:
 					rc.mode.dz = int(mavlink_msg_param_value_get_param_value(&msg));
+					break;
+					
+					case 492:
+					std::cout << "Parameters received...!" << std::endl;
 					break;
 				}
 			break;
@@ -164,7 +168,25 @@ void msg_receive(uint8_t c) {
 // Mavlink radio message send function
 //
 void msg_send_radio(float throttle, float roll, float pitch, float yaw) {
-
+	//
+	// Command initializtion
+	//
+	mavlink_rc_channels_override_t radio_commands;
+	radio_commands.target_system = 1;
+	radio_commands.target_component = MAV_COMP_ID_SYSTEM_CONTROL;
+	radio_commands.chan1_raw = roll;
+	radio_commands.chan2_raw = pitch;
+	radio_commands.chan3_raw = throttle;
+	radio_commands.chan4_raw = yaw;
+	radio_commands.chan5_raw = mode; 
+	//
+	// Message pack and send
+	//
+	mavlink_message_t msg;
+	uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+	mavlink_msg_rc_channels_override_encode(1, MAV_COMP_ID_SYSTEM_CONTROL, &msg, &radio_commands);
+	unsigned len = mavlink_msg_to_send_buffer(buf, &msg);
+	asio::write(port, asio::buffer(buf,len));
 }
 //
 // Mavlink arm message send function
@@ -190,7 +212,7 @@ void msg_send_arm() {
 	// 
 	mavlink_message_t msg;
 	uint8_t buf[MAVLINK_MAX_PACKET_LEN];
-	mavlink_msg_command_long_encode(1, 255, &msg, &arm_command_msg);
+	mavlink_msg_command_long_encode(1, MAV_COMP_ID_SYSTEM_CONTROL, &msg, &arm_command_msg);
 	unsigned len = mavlink_msg_to_send_buffer(buf, &msg);
 	asio::write(port, asio::buffer(buf,len));
 }
@@ -218,7 +240,7 @@ void msg_send_disarm() {
 	//
 	mavlink_message_t msg;
 	uint8_t buf[MAVLINK_MAX_PACKET_LEN];	
-	mavlink_msg_command_long_encode(1, 255, &msg, &arm_command_msg);
+	mavlink_msg_command_long_encode(1, MAV_COMP_ID_SYSTEM_CONTROL, &msg, &arm_command_msg);
 	unsigned len = mavlink_msg_to_send_buffer(buf, &msg);
 	asio::write(port, asio::buffer(buf,len));
 }
@@ -237,13 +259,13 @@ void msg_send_request_param() {
 	//
 	mavlink_param_request_list_t request_param__list_msg;
 	request_param__list_msg.target_system = 1;
-	request_param__list_msg.target_component = 255;	 
+	request_param__list_msg.target_component = MAV_COMP_ID_SYSTEM_CONTROL;	 
 	//
 	// Message pack and send
 	//
 	mavlink_message_t msg;
 	uint8_t buf[MAVLINK_MAX_PACKET_LEN];	
-	mavlink_msg_param_request_list_encode(1, 255, &msg, &request_param__list_msg);
+	mavlink_msg_param_request_list_encode(1, MAV_COMP_ID_SYSTEM_CONTROL, &msg, &request_param__list_msg);
 	unsigned len = mavlink_msg_to_send_buffer(buf, &msg);
 	asio::write(port, asio::buffer(buf,len));	
 }
@@ -257,7 +279,7 @@ void guidance_msg_Callback(const marvel_v_0_1::Guidance_Command::ConstPtr& msg) 
 	pitch = rc.calc_pitch(int(msg->pitch));
 	yaw = rc.calc_yaw(int(msg->yaw));
 	mode = rc.calc_mode(int(msg->mode));
-	//std::cout << " " << roll << " " << pitch << " " << throttle << " " << yaw << " " << mode <<std::endl;
+	//std::cout << roll << " " << pitch << " " << throttle << " " << yaw << " " << mode << std::endl;
 }
 //
 // Main program
@@ -267,7 +289,7 @@ int main(int argc, char **argv) {
     // Port configuration
     //
     port.open("/dev/ttySAC0");
-    port.set_option(asio::serial_port_base::baud_rate(57600));
+    port.set_option(asio::serial_port_base::baud_rate(115200));
     //
     // Ros configuration
     //
