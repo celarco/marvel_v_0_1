@@ -158,9 +158,9 @@ int main(int argc, char **argv) {
 	// Arming the quadcopter
 	//
 	guidance_msg.arm = 1;
-	guidance_msg.roll = -100.0;
-	guidance_msg.pitch = 100.0;
-	guidance_msg.throttle = 100.0;
+	guidance_msg.roll = 0.0;
+	guidance_msg.pitch = 0.0;
+	guidance_msg.throttle = 10.0;
 	guidance_msg.yaw = 0.0;
 	//
     // Guidance loop

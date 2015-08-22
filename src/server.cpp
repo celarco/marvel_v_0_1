@@ -24,6 +24,7 @@ bool current_arm_status = 0;
 int roll = 0, pitch = 0, yaw = 0, throttle = 0;
 int mode = 0;
 radio rc;
+int arm_status = 0;
 //
 // Mavlink message receive and handle function
 //
@@ -39,8 +40,11 @@ void msg_receive(uint8_t c) {
         //
         switch(msg.msgid)
         {   case MAVLINK_MSG_ID_HEARTBEAT:
-				
-            break;
+				mavlink_heartbeat_t heartbeat;
+				mavlink_msg_heartbeat_decode(&msg, &heartbeat);
+				if(int(heartbeat.base_mode) == 81) arm_status = false;
+				if(int(heartbeat.base_mode) == 209) arm_status = true;
+			break;
             case MAVLINK_MSG_ID_PARAM_VALUE:
 				mavlink_param_value_t param_value_msg;
 				mavlink_msg_param_value_decode(&msg, &param_value_msg);
@@ -156,7 +160,7 @@ void msg_receive(uint8_t c) {
 					rc.mode.dz = int(mavlink_msg_param_value_get_param_value(&msg));
 					break;
 					
-					case 492:
+					case 500:
 					std::cout << "Parameters received...!" << std::endl;
 					break;
 				}
@@ -168,25 +172,61 @@ void msg_receive(uint8_t c) {
 // Mavlink radio message send function
 //
 void msg_send_radio(float throttle, float roll, float pitch, float yaw) {
-	//
-	// Command initializtion
-	//
-	mavlink_rc_channels_override_t radio_commands;
-	radio_commands.target_system = 1;
-	radio_commands.target_component = MAV_COMP_ID_SYSTEM_CONTROL;
-	radio_commands.chan1_raw = roll;
-	radio_commands.chan2_raw = pitch;
-	radio_commands.chan3_raw = throttle;
-	radio_commands.chan4_raw = yaw;
-	radio_commands.chan5_raw = mode; 
-	//
-	// Message pack and send
-	//
-	mavlink_message_t msg;
-	uint8_t buf[MAVLINK_MAX_PACKET_LEN];
-	mavlink_msg_rc_channels_override_encode(1, MAV_COMP_ID_SYSTEM_CONTROL, &msg, &radio_commands);
-	unsigned len = mavlink_msg_to_send_buffer(buf, &msg);
-	asio::write(port, asio::buffer(buf,len));
+	if(arm_status == true) {
+		//
+		// Command initializtion
+		//
+		mavlink_rc_channels_override_t radio_commands;
+		radio_commands.target_system = 1;
+		radio_commands.target_component = MAV_COMP_ID_SYSTEM_CONTROL;
+		radio_commands.chan1_raw = roll;
+		radio_commands.chan2_raw = pitch;
+		radio_commands.chan3_raw = throttle;
+		radio_commands.chan4_raw = yaw;
+		radio_commands.chan5_raw = mode; 
+		radio_commands.chan6_raw = 0; 
+		radio_commands.chan7_raw = 0;
+		radio_commands.chan8_raw = 0; 
+		//
+		// Message pack and send
+		//
+		mavlink_message_t msg;
+		uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+		mavlink_msg_rc_channels_override_encode(255, 0, &msg, &radio_commands);
+		unsigned len = mavlink_msg_to_send_buffer(buf, &msg);
+		asio::write(port, asio::buffer(buf,len));	
+	}
+	if(arm_status == false) {
+		//
+		// Command initializtion
+		//
+		mavlink_rc_channels_override_t radio_commands;
+		radio_commands.target_system = 1;
+		radio_commands.target_component = MAV_COMP_ID_SYSTEM_CONTROL;
+		radio_commands.chan1_raw = 0;
+		radio_commands.chan2_raw = 0;
+		radio_commands.chan3_raw = 0;
+		radio_commands.chan4_raw = 0;
+		radio_commands.chan5_raw = 0; 
+		radio_commands.chan6_raw = 0; 
+		radio_commands.chan7_raw = 0;
+		radio_commands.chan8_raw = 0; 
+		//
+		// Message pack and send
+		//
+		mavlink_message_t msg;
+		uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+		mavlink_msg_rc_channels_override_encode(255, 0, &msg, &radio_commands);
+		unsigned len = mavlink_msg_to_send_buffer(buf, &msg);
+		asio::write(port, asio::buffer(buf,len));	
+	} 
+}
+// 
+// Radio send timer callback function
+//
+void msg_send_radio_callback(const ros::TimerEvent&)
+{
+	msg_send_radio(throttle, roll, pitch, yaw);
 }
 //
 // Mavlink arm message send function
@@ -212,7 +252,7 @@ void msg_send_arm() {
 	// 
 	mavlink_message_t msg;
 	uint8_t buf[MAVLINK_MAX_PACKET_LEN];
-	mavlink_msg_command_long_encode(1, MAV_COMP_ID_SYSTEM_CONTROL, &msg, &arm_command_msg);
+	mavlink_msg_command_long_encode(255, 0, &msg, &arm_command_msg);
 	unsigned len = mavlink_msg_to_send_buffer(buf, &msg);
 	asio::write(port, asio::buffer(buf,len));
 }
@@ -240,7 +280,7 @@ void msg_send_disarm() {
 	//
 	mavlink_message_t msg;
 	uint8_t buf[MAVLINK_MAX_PACKET_LEN];	
-	mavlink_msg_command_long_encode(1, MAV_COMP_ID_SYSTEM_CONTROL, &msg, &arm_command_msg);
+	mavlink_msg_command_long_encode(255, 0, &msg, &arm_command_msg);
 	unsigned len = mavlink_msg_to_send_buffer(buf, &msg);
 	asio::write(port, asio::buffer(buf,len));
 }
@@ -265,7 +305,7 @@ void msg_send_request_param() {
 	//
 	mavlink_message_t msg;
 	uint8_t buf[MAVLINK_MAX_PACKET_LEN];	
-	mavlink_msg_param_request_list_encode(1, MAV_COMP_ID_SYSTEM_CONTROL, &msg, &request_param__list_msg);
+	mavlink_msg_param_request_list_encode(255, 0, &msg, &request_param__list_msg);
 	unsigned len = mavlink_msg_to_send_buffer(buf, &msg);
 	asio::write(port, asio::buffer(buf,len));	
 }
@@ -279,7 +319,6 @@ void guidance_msg_Callback(const marvel_v_0_1::Guidance_Command::ConstPtr& msg) 
 	pitch = rc.calc_pitch(int(msg->pitch));
 	yaw = rc.calc_yaw(int(msg->yaw));
 	mode = rc.calc_mode(int(msg->mode));
-	//std::cout << roll << " " << pitch << " " << throttle << " " << yaw << " " << mode << std::endl;
 }
 //
 // Main program
@@ -297,7 +336,8 @@ int main(int argc, char **argv) {
     ros::NodeHandle n;
     ros::Publisher pub = n.advertise<marvel_v_0_1::Autopilot>("server", 1000);
     ros::Subscriber sub = n.subscribe("guidance_pack", 1000, guidance_msg_Callback);
-    //
+    ros::Timer rc_timer = n.createTimer(ros::Duration(0.1), msg_send_radio_callback);
+	//
 	// Read autopilot parameters
 	//
 	msg_send_request_param();
@@ -309,7 +349,7 @@ int main(int argc, char **argv) {
         asio::read(port, asio::buffer(&r_byte,1));
         msg_receive(uint8_t(r_byte));
 		
-	 	if((current_arm_status == 1)&&(last_arm_status == 0)) {
+	 	if(((current_arm_status == 1)&&(last_arm_status == 0)) || ((current_arm_status == 1)&&(arm_status == 0))) {
 			last_arm_status = 1;
 			msg_send_arm();
 		}
@@ -317,8 +357,7 @@ int main(int argc, char **argv) {
 			last_arm_status = 0;
 			msg_send_disarm();
 		} 
-		
-        ros::spinOnce();
+		ros::spinOnce();
         pub.publish(autopilot_msg);
     }
     return 0;
