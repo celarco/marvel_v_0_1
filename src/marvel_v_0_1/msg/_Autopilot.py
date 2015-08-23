@@ -6,20 +6,17 @@ import struct
 
 
 class Autopilot(genpy.Message):
-  _md5sum = "8a4e7d5e65c0b341eaab6e66bdcb87a9"
+  _md5sum = "0cf6a9b7f6f09b8f7564ebd8f92d06df"
   _type = "marvel_v_0_1/Autopilot"
   _has_header = False #flag to mark the presence of a Header object
   _full_text = """float32 heading
 float32 rate
-float32 height
-float32 v_x
-float32 v_y
-float32 v_z
+float32 climb
 bool armed
 
 """
-  __slots__ = ['heading','rate','height','v_x','v_y','v_z','armed']
-  _slot_types = ['float32','float32','float32','float32','float32','float32','bool']
+  __slots__ = ['heading','rate','climb','armed']
+  _slot_types = ['float32','float32','float32','bool']
 
   def __init__(self, *args, **kwds):
     """
@@ -29,7 +26,7 @@ bool armed
     changes.  You cannot mix in-order arguments and keyword arguments.
 
     The available fields are:
-       heading,rate,height,v_x,v_y,v_z,armed
+       heading,rate,climb,armed
 
     :param args: complete set of field values, in .msg order
     :param kwds: use keyword arguments corresponding to message field names
@@ -42,23 +39,14 @@ bool armed
         self.heading = 0.
       if self.rate is None:
         self.rate = 0.
-      if self.height is None:
-        self.height = 0.
-      if self.v_x is None:
-        self.v_x = 0.
-      if self.v_y is None:
-        self.v_y = 0.
-      if self.v_z is None:
-        self.v_z = 0.
+      if self.climb is None:
+        self.climb = 0.
       if self.armed is None:
         self.armed = False
     else:
       self.heading = 0.
       self.rate = 0.
-      self.height = 0.
-      self.v_x = 0.
-      self.v_y = 0.
-      self.v_z = 0.
+      self.climb = 0.
       self.armed = False
 
   def _get_types(self):
@@ -74,7 +62,7 @@ bool armed
     """
     try:
       _x = self
-      buff.write(_struct_6fB.pack(_x.heading, _x.rate, _x.height, _x.v_x, _x.v_y, _x.v_z, _x.armed))
+      buff.write(_struct_3fB.pack(_x.heading, _x.rate, _x.climb, _x.armed))
     except struct.error as se: self._check_types(struct.error("%s: '%s' when writing '%s'" % (type(se), str(se), str(_x))))
     except TypeError as te: self._check_types(ValueError("%s: '%s' when writing '%s'" % (type(te), str(te), str(_x))))
 
@@ -87,8 +75,8 @@ bool armed
       end = 0
       _x = self
       start = end
-      end += 25
-      (_x.heading, _x.rate, _x.height, _x.v_x, _x.v_y, _x.v_z, _x.armed,) = _struct_6fB.unpack(str[start:end])
+      end += 13
+      (_x.heading, _x.rate, _x.climb, _x.armed,) = _struct_3fB.unpack(str[start:end])
       self.armed = bool(self.armed)
       return self
     except struct.error as e:
@@ -103,7 +91,7 @@ bool armed
     """
     try:
       _x = self
-      buff.write(_struct_6fB.pack(_x.heading, _x.rate, _x.height, _x.v_x, _x.v_y, _x.v_z, _x.armed))
+      buff.write(_struct_3fB.pack(_x.heading, _x.rate, _x.climb, _x.armed))
     except struct.error as se: self._check_types(struct.error("%s: '%s' when writing '%s'" % (type(se), str(se), str(_x))))
     except TypeError as te: self._check_types(ValueError("%s: '%s' when writing '%s'" % (type(te), str(te), str(_x))))
 
@@ -117,12 +105,12 @@ bool armed
       end = 0
       _x = self
       start = end
-      end += 25
-      (_x.heading, _x.rate, _x.height, _x.v_x, _x.v_y, _x.v_z, _x.armed,) = _struct_6fB.unpack(str[start:end])
+      end += 13
+      (_x.heading, _x.rate, _x.climb, _x.armed,) = _struct_3fB.unpack(str[start:end])
       self.armed = bool(self.armed)
       return self
     except struct.error as e:
       raise genpy.DeserializationError(e) #most likely buffer underfill
 
 _struct_I = genpy.struct_I
-_struct_6fB = struct.Struct("<6fB")
+_struct_3fB = struct.Struct("<3fB")

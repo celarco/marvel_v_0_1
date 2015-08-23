@@ -24,7 +24,6 @@ bool current_arm_status = 0;
 int roll = 0, pitch = 0, yaw = 0, throttle = 0;
 int mode = 0;
 radio rc;
-int arm_status = 0;
 //
 // Mavlink message receive and handle function
 //
@@ -38,14 +37,21 @@ void msg_receive(uint8_t c) {
     {   //
         // Handle message
         //
-        switch(msg.msgid)
+        std::cout <<int(msg.msgid) <<std::endl;
+		switch(msg.msgid)
         {   case MAVLINK_MSG_ID_HEARTBEAT:
 				mavlink_heartbeat_t heartbeat;
 				mavlink_msg_heartbeat_decode(&msg, &heartbeat);
-				if(int(heartbeat.base_mode) == 81) arm_status = false;
-				if(int(heartbeat.base_mode) == 209) arm_status = true;
+				if(int(heartbeat.base_mode) == 81) autopilot_msg.armed = false;
+				if(int(heartbeat.base_mode) == 209) autopilot_msg.armed = true;
 			break;
-            case MAVLINK_MSG_ID_PARAM_VALUE:
+            case MAVLINK_MSG_ID_ATTITUDE:
+				mavlink_attitude_t attitude_msg;
+				mavlink_msg_attitude_decode(&msg, &attitude_msg);
+				autopilot_msg.rate = attitude_msg.rollspeed * 180 / 3.14;
+				std::cout << autopilot_msg.rate << std::endl;
+			break;
+			case MAVLINK_MSG_ID_PARAM_VALUE:
 				mavlink_param_value_t param_value_msg;
 				mavlink_msg_param_value_decode(&msg, &param_value_msg);
 				switch(int(param_value_msg.param_index)) {
@@ -172,7 +178,7 @@ void msg_receive(uint8_t c) {
 // Mavlink radio message send function
 //
 void msg_send_radio(float throttle, float roll, float pitch, float yaw) {
-	if(arm_status == true) {
+	if(autopilot_msg.armed == true) {
 		//
 		// Command initializtion
 		//
@@ -196,7 +202,7 @@ void msg_send_radio(float throttle, float roll, float pitch, float yaw) {
 		unsigned len = mavlink_msg_to_send_buffer(buf, &msg);
 		asio::write(port, asio::buffer(buf,len));	
 	}
-	if(arm_status == false) {
+	if(autopilot_msg.armed == false) {
 		//
 		// Command initializtion
 		//
@@ -349,7 +355,7 @@ int main(int argc, char **argv) {
         asio::read(port, asio::buffer(&r_byte,1));
         msg_receive(uint8_t(r_byte));
 		
-	 	if(((current_arm_status == 1)&&(last_arm_status == 0)) || ((current_arm_status == 1)&&(arm_status == 0))) {
+	 	if(((current_arm_status == 1)&&(last_arm_status == 0)) || ((current_arm_status == 1)&&(autopilot_msg.armed == 0))) {
 			last_arm_status = 1;
 			msg_send_arm();
 		}

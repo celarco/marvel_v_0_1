@@ -16,6 +16,8 @@ vertical_mode g_vertical_mode;
 horizontal_mode g_horizontal_mode;
 heading_mode g_heading_mode;
 
+int quality;
+
 float v_x_setpoint = 0, v_y_setpoint = 0, v_z_setpoint = 0;
 float v_x, v_y, v_z;
 
@@ -121,8 +123,11 @@ bool initialize_flight_plan() {
 // Optical flow callback function
 //
 void optical_flow_Callback(const marvel_v_0_1::OpticalFlow::ConstPtr& msg) {
-
-
+	
+	v_x = msg->velocity_x;
+	v_y = msg->velocity_y;
+	height = msg->ground_distance;
+	quality = msg->quality;
 }
 //
 // Server receive callback function
@@ -234,7 +239,9 @@ int main(int argc, char **argv) {
             vertical_lock_param = int(f[current_function_no].arg[1]);
         break;
         }
-
+		//
+		// Vertical mode pd
+		//
         switch(g_vertical_mode) {
         case VERTICAL_HOLD:
 
@@ -248,6 +255,37 @@ int main(int argc, char **argv) {
 
         break;
         }
+		//
+		// Horizontal pd
+		//
+		switch(g_horizontal_mode) {
+		case HORIZONTAL_HOLD:
+		
+		break;
+		case HORIZONTAL_LOCK:
+		
+		break;
+		case HORIZONTAL_CLIMB:
+		
+		break;
+		case HORIZONTAL_VELOCITY:
+		
+		break;
+		}
+		//
+		// Heading pd
+		//
+		switch(g_heading_mode) {
+		case HEADING_HOLD:
+		
+		break;
+		case HEADING_LOCK:
+		
+		break;
+		case HEADING_RATE:
+		
+		break;
+		}
 
         ros::spinOnce();
         pub.publish(guidance_msg);
