@@ -13,17 +13,10 @@
 
 
 /**
- * This tutorial demonstrates simple receipt of messages over the ROS system.
+ * This tutorial Under B.S.D licence
  */
 
-
-
-
-
-
-
-
-
+double some=0;
  
  using namespace cv;
  using namespace std;
@@ -32,6 +25,7 @@ static const std::string OPENCV_WINDOW = "Image window";
 
 class ImageConverter
    {
+
 
 
      ros::NodeHandle nh_;
@@ -173,7 +167,7 @@ if (maxVal-debug[0] > binary_tresh)
       cv::threshold( binary, binary, 0, 255,0);
 
 binary2=binary;   
-   imshow("binary",binary);
+ //  imshow("binary",binary);
    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    
   // imshow ("origin binary",binary);
@@ -297,8 +291,10 @@ if (maxVal-debug[0] > binary_tresh){
 
 }
 
+double counter;
 
-double some=0;
+
+
 
 
 if (maxVal-debug[0] > binary_tresh){
@@ -306,6 +302,14 @@ if (maxVal-debug[0] > binary_tresh){
 
  for( int i = 0; i < contours.size(); i++ )
  {
+
+     counter=counter+1;
+
+      if (counter==20){
+          some=0;
+          counter=0;
+      }
+
 
    if ( (arcLength( contours[i], true ) >= some) && (contourArea(contours[i])>= some) )
      {
@@ -324,9 +328,9 @@ if (maxVal-debug[0] > binary_tresh){
    y[i]=mu[i].m01/mu[i].m00;
    double orientation = 0.5*atan(2*mu[i].m11 / (mu[i].m20 - mu[i].m02));
 
-   cout <<"x       =" << x[i] << "========" << some <<endl;
-   cout <<"y       =" << y[i] << "========"<< some <<endl;
-   cout <<"Delta X   :" << x[i]-(640/2) << endl;
+   cout << "x        :" << x[i] << "========" << some <<endl;
+   cout << "y        :" << y[i] << "========"<< some <<endl;
+   cout << "Delta X  :" << x[i]-(640/2) << endl;
    cout << "Delta Y  :" << y[i]-(480/2) << endl;
 
    cout << "Angle            :" << orientation <<  endl;
@@ -340,31 +344,18 @@ if (maxVal-debug[0] > binary_tresh){
 //else cout << "not found" << endl;
 
 
- }
+ } //for end
+
+
+
+
 }
 
 
-
-
-
-
-
-
-
-
-
-
-	
     //cv::imshow("ax asli", blur_img);
     //cv::imshow("binary", binary);
    
-    
-    
-    
-    
 
-     
-     
      
 //    imshow( "Dilation Demo", dilation_dst );
 
@@ -391,11 +382,12 @@ if (maxVal-debug[0] > binary_tresh){
    printf( " *                                            * \n" );
    printf( " *     This program debug and Develop by      * \n" );
    printf( " *          Mohammad Hossein Kazemi           * \n" );
+   printf( " *               Ali Jameie                   * \n" );
    printf( " *        All Right reserved 2015-2016        * \n" );
    printf( " *      Email:Mhkazemi_engineer@yahoo.com     * \n" );
+   printf( " *        Email:Celarco.Group@Gmail.com       * \n" );
    printf( " *     AmirKabir University of Technology     * \n" );
-   printf( " *    AUT-MAV AUTONUMUS AIRIAL VEHICLE TEAM   * \n" );
-   printf( " *                                            * \n" );
+   printf( " *   AUT-MAV AUTONOMOUS AIRIAL VEHICLE TEAM   * \n" );
    printf( " *                                            * \n" );
    printf( " *                                            * \n" );
    printf( " *                                            * \n" );
