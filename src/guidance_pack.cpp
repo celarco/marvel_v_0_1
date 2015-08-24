@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -9,6 +10,8 @@
 #include <marvel_v_0_1/OpticalFlow.h>
 #include <marvel_v_0_1/Autopilot.h>
 #include <marvel_v_0_1/Guidance_Command.h>
+#include <marvel_v_0_1/window_detector.h>
+#include <marvel_v_0_1/obstacle_avoidance.h>
 //
 // Guidance variables
 //
@@ -34,6 +37,9 @@ float rate;
 float rotate_break_cond;
 float move_oa_break_cond;
 
+float window_deltax,window_deltay,window_pitch;
+
+float obstacle_vx_setpoint,obstacle_vy_setpoint,obstacle_vz_setpoint,obstacle_psi_setpoint;
 bool armed;
 
 pid pid_x, pid_y, pid_z, pid_h;
@@ -99,7 +105,7 @@ bool initialize_flight_plan() {
         //
         // Printing functions and blocks to verify
         //
-        std::cout << "Blocks are :" << std::endl;
+        std::cout << "Blockpiths are :" << std::endl;
         for(int i = 0; i < block_count; i++) {
 
             std::cout << "Block No. " << b[i].id << " : " << b[i].name <<" with start function No. " << b[i].start_function_number << std::endl;
@@ -138,6 +144,23 @@ void server_receive_Callback(const marvel_v_0_1::Autopilot::ConstPtr& msg) {
 	armed = msg->armed;
 }
 //
+// Window position data receive callback function
+//
+void window_postion_receive_Callback(const marvel_v_0_1::window_detector::ConstPtr& msg) {
+	window_deltax=msg->deltax;
+	window_deltay=msg->deltay;
+	window_pitch=msg->pith;
+}
+//
+// Obstacle Avoidance data receive callback function
+//
+void window_postion_receive_Callback(const marvel_v_0_1::obstacle_avoidance::ConstPtr& msg) {
+	obstacle_vx_setpoint=msg->vx;
+	obstacle_vy_setpoint=msg->vy;
+	obstacle_vz_setpoint=msg->vz;
+	obstacle_psi_setpoint=msg->psidot
+}
+//
 // Main program start
 //
 int main(int argc, char **argv) {
@@ -173,11 +196,15 @@ int main(int argc, char **argv) {
     ros::NodeHandle n;
     ros::Subscriber sub = n.subscribe("optical_flow", 1000, optical_flow_Callback);
     ros::Subscriber sub2 = n.subscribe("server", 1000, server_receive_Callback);
+	ros::Subscriber sub3 = n.subscribe("window_postion", 1000, window_postion_receive_Callback);
+	ros::Subscriber sub4 = n.subscribe("obstacle_data", 1000, obstacle_avoidance_receive_Callback);
     ros::Publisher pub = n.advertise<marvel_v_0_1::Guidance_Command>("guidance_pack", 1000);
     marvel_v_0_1::Guidance_Command guidance_msg;
-    //
+    
+	//
     // Flight plan initialization
     //
+	
     if(!(initialize_flight_plan())) {
 
         std::cout<<"Error: Flight plan couldn't be initialized"<<std::endl;
@@ -197,7 +224,11 @@ int main(int argc, char **argv) {
         //
         // Handle function characteristics
         //
-        if(f[current_function_no].done == true) current_function_no ++;
+        if(f[current_function_no].done == true){
+			current_function_no ++;
+			system("rosservice call /qr_kill 1 1 ");
+			system("rosservice call /window_kill 1 1");
+		} 
 
         switch(f[current_function_no].type) {
 
@@ -227,7 +258,7 @@ int main(int argc, char **argv) {
 
         case heading_lock:
             g_heading_mode = HEADING_LOCK;
-            heading_lock_param = int(f[current_function_no].arg[0]);
+            
         break;
 
         case heading_unlock:
@@ -261,19 +292,29 @@ int main(int argc, char **argv) {
         case go:
             g_vertical_mode = VERTICAL_LOCK;
             g_horizontal_mode = HORIZONTAL_LOCK;
-            horizontal_lock_param = int(f[current_function_no].arg[0]);
-            vertical_lock_param = int(f[current_function_no].arg[1]);
+          
         break;
 
         case go_oa:
 		
             g_vertical_mode = VERTICAL_LOCK;
             g_horizontal_mode = HORIZONTAL_LOCK;
-            g_lock_param = int(f[current_function_no].arg[0]);
+            g_lock_param = lock_param(f[current_function_no].arg[0]);
 			
 			switch (g_lock_param){
 			 
 			case WINDOW_DETECTOR:
+				system("roslaunch openni2_launch openni2.launch  &> /dev/null &");
+				system("rosrun marvel_v_0_1 window_detector  &> /dev/null &");
+				system("rosrun marvel_v_0_1 obstacle_avoidance  &> /dev/null &");
+				guidance_msg.vx_uni=window_deltax*VELOCITY_FAKE_COEFF;
+				guidance_msg.vy_uni=window_deltay*VELOCITY_FAKE_COEFF;
+				guidance_msg.vz_uni=window_deltaz*VELOCITY_FAKE_COEFF;
+				
+				v_x_setpoint = obstacle_vx_setpoint;
+				v_y_setpoint = obstacle_vy_setpoint;
+				v_z_setpoint = obstacle_vz_setpoint;
+				
 			break;
 				 
 			case FLOWER:
