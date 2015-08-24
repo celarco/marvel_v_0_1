@@ -1,5 +1,3 @@
-
-// %Tag(FULLTEXT)%
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "sensor_msgs/Image.h"
@@ -10,13 +8,31 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <stdio.h>
 #include <math.h>
-#include <marvel_v_0_1/window_detector.h>
+#include <marvel_v_0_1/Guidance_Command.h>
+#include <marvel_v_0_1/obstacle_avoidance.h>
 
 
 /**
- * This tutorial demonstrates simple receipt of messages over the ROS system.
+ * This code is under B.S.D licence
  **/
  
+
+marvel_v_0_1::Guidance_Command guidance_msg;
+marvel_v_0_1::obstacle_avoidance vdata;
+
+float vx_uni = 0,vy_uni=0,vz_uni=0;
+//
+// Guidance message callback function
+//
+
+void obstacle_subscribe_callback(const marvel_v_0_1::Guidance_Command::ConstPtr& msg) {
+
+    vx_uni=msg->vx_uni;
+    vy_uni=msg->vy_uni;
+    vz_uni=msg->vz_uni;
+    ros::spinOnce();
+
+}
 
 
 static const std::string OPENCV_WINDOW = "Image window";
@@ -25,7 +41,10 @@ class ImageConverter
    {
      ros::NodeHandle nh_;
      ros::NodeHandle n;
-
+     ros::NodeHandle ns;
+     ros::Publisher chatter_pub = n.advertise<marvel_v_0_1::obstacle_avoidance>("obstacle_data", 1000);
+     ros::Subscriber sub = n.subscribe("guidance_pack", 1000, obstacle_subscribe_callback);
+     float value,value1,value2,value3;
      image_transport::ImageTransport it_;
      image_transport::Subscriber image_sub_;
      image_transport::Publisher image_pub_;
@@ -139,7 +158,7 @@ class ImageConverter
 	//printf ("100,100 value: %d \n", blur_img.at<unsigned char>(100,100));
 	//printf ("100,100 value: %f \n", cv_ptr->image.at<float>(100,100));
 	//printf ("column: %d \n",cv_ptr->image.cols);
-	//printf ("row: %d \n",cv_ptr->image.rows);
+    //printf ("row: %d \n",cv_ptr->image.rows);
 	
 	for(int i=0;i<cv_ptr->image.rows;i++)
 	{
@@ -156,13 +175,26 @@ class ImageConverter
 		
 		}
 	}
-	source_po_x = source_po_x / ((double)(cv_ptr->image.rows * cv_ptr->image.cols)) + 1.0;
-	source_po_y = source_po_y / ((double)(cv_ptr->image.rows * cv_ptr->image.cols));
-	source_po_z = source_po_z / ((double)(cv_ptr->image.rows * cv_ptr->image.cols));
+    source_po_x = source_po_x / ((double)(cv_ptr->image.rows * cv_ptr->image.cols)) + vx_uni;
+    source_po_y = source_po_y / ((double)(cv_ptr->image.rows * cv_ptr->image.cols)) + vy_uni;
+    source_po_z = source_po_z / ((double)(cv_ptr->image.rows * cv_ptr->image.cols)) + vz_uni;
 	printf ("X: %f \n", source_po_x);
 	printf ("Y: %f \n", source_po_y);
 	printf ("Z: %f \n", source_po_z);
 	
+    value=source_po_x;
+    value1=source_po_y;
+    value2=source_po_z;
+    vdata.vx=value;
+    vdata.vy=value1;
+    vdata.vz=value2;
+    chatter_pub.publish(vdata);
+    ros::spinOnce();
+    
+    
+
+
+
     cv::imshow("Blur", blur_img);
     //cv::imshow("Depth", cv_ptr->image);
 
@@ -179,6 +211,31 @@ class ImageConverter
 
    int main(int argc, char** argv)
    {
+       printf( " ********************************************** \n" );
+       printf( " ********************************************** \n" );
+       printf( " *                                            * \n" );
+       printf( " *                                            * \n" );
+       printf( " *                                            * \n" );
+       printf( " *                                            * \n" );
+       printf( " *                                            * \n" );
+       printf( " *                                            * \n" );
+       printf( " *                                            * \n" );
+       printf( " *     This program debug and Develop by      * \n" );
+       printf( " *          Mohammad Hossein Kazemi           * \n" );
+       printf( " *               Ali Jameie                   * \n" );
+       printf( " *               Ali Honari                   * \n" );
+       printf( " *        All Right reserved 2015-2016        * \n" );
+       printf( " *      Email:Mhkazemi_engineer@yahoo.com     * \n" );
+       printf( " *        Email:Celarco.Group@Gmail.com       * \n" );
+       printf( " *        Email:Honari.ali@Gmail.com          * \n" );
+       printf( " *     AmirKabir University of Technology     * \n" );
+       printf( " *   AUT-MAV AUTONOMOUS AIRIAL VEHICLE TEAM   * \n" );
+       printf( " *                                            * \n" );
+       printf( " *                                            * \n" );
+       printf( " *                                            * \n" );
+       printf( " *                                            * \n" );
+       printf( " ********************************************** \n" );
+       printf( " ********************************************** \n" );
      ros::init(argc, argv, "image_converter");
      ros::init(argc, argv, "obstacle_detection");
 
