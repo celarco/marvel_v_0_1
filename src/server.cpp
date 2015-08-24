@@ -37,7 +37,7 @@ void msg_receive(uint8_t c) {
     {   //
         // Handle message
         //
-        std::cout << int(msg.msgid) <<std::endl;
+        // std::cout << int(msg.msgid) <<std::endl;
 		switch(msg.msgid)
         {   case MAVLINK_MSG_ID_HEARTBEAT:
 				mavlink_heartbeat_t heartbeat;
@@ -317,7 +317,6 @@ void msg_send_heartbeat() {
 	mavlink_msg_heartbeat_encode(255, 0, &msg, &heartbeat_msg);
 	unsigned len = mavlink_msg_to_send_buffer(buf, &msg);
 	asio::write(port, asio::buffer(buf,len));
-	std::cout << "heartbeat sent" << std::endl;
 }
 //
 // Heartbeat send timer callback function
@@ -333,17 +332,39 @@ void msg_send_request_param() {
 	//
 	// Command initializtion
 	//
-	mavlink_param_request_list_t request_param__list_msg;
-	request_param__list_msg.target_system = 1;
-	request_param__list_msg.target_component = MAV_COMP_ID_SYSTEM_CONTROL;	 
+	mavlink_param_request_list_t request_param_list_msg;
+	request_param_list_msg.target_system = 1;
+	request_param_list_msg.target_component = MAV_COMP_ID_SYSTEM_CONTROL;	 
 	//
 	// Message pack and send
 	//
 	mavlink_message_t msg;
 	uint8_t buf[MAVLINK_MAX_PACKET_LEN];	
-	mavlink_msg_param_request_list_encode(255, 0, &msg, &request_param__list_msg);
+	mavlink_msg_param_request_list_encode(255, 0, &msg, &request_param_list_msg);
 	unsigned len = mavlink_msg_to_send_buffer(buf, &msg);
 	asio::write(port, asio::buffer(buf,len));	
+}
+//
+// Mavlink request data stream function
+//
+void msg_send_request_stream() {
+	//
+	// Command initializtion
+	//
+	mavlink_request_data_stream_t request_stream_msg;
+	request_stream_msg.target_system = 1;
+	request_stream_msg.target_component = MAV_COMP_ID_SYSTEM_CONTROL;
+	request_stream_msg.req_stream_id = 0;
+	request_stream_msg.req_message_rate = 5;
+	request_stream_msg.start_stop = 1;
+	//
+	// Message pack and send
+	//
+	mavlink_message_t msg;
+	uint8_t buf[MAVLINK_MAX_PACKET_LEN];	
+	mavlink_msg_request_data_stream_encode(255, 0, &msg, &request_stream_msg);
+	unsigned len = mavlink_msg_to_send_buffer(buf, &msg);
+	asio::write(port, asio::buffer(buf,len));
 }
 //
 // Guidance message callback function
@@ -404,7 +425,8 @@ int main(int argc, char **argv) {
 	//
 	// Read autopilot parameters
 	//
-	//msg_send_request_param();
+	msg_send_request_stream();
+	msg_send_request_param();
 	//
     // Main loop
     //
