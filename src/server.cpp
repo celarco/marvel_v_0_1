@@ -360,6 +360,33 @@ void guidance_msg_Callback(const marvel_v_0_1::Guidance_Command::ConstPtr& msg) 
 // Main program
 //
 int main(int argc, char **argv) {
+
+
+    printf( " ********************************************** \n" );
+    printf( " ********************************************** \n" );
+    printf( " *                                            * \n" );
+    printf( " *                                            * \n" );
+    printf( " *                                            * \n" );
+    printf( " *                                            * \n" );
+    printf( " *                                            * \n" );
+    printf( " *                                            * \n" );
+    printf( " *                                            * \n" );
+    printf( " *     This program debug and Develop by      * \n" );
+    printf( " *          Mohammad Hossein Kazemi           * \n" );
+    printf( " *               Ali Jameie                   * \n" );
+    printf( " *        All Right reserved 2015-2016        * \n" );
+    printf( " *      Email:Mhkazemi_engineer@yahoo.com     * \n" );
+    printf( " *        Email:Celarco.Group@Gmail.com       * \n" );
+    printf( " *     AmirKabir University of Technology     * \n" );
+    printf( " *   AUT-MAV AUTONOMOUS AIRIAL VEHICLE TEAM   * \n" );
+    printf( " *                                            * \n" );
+    printf( " *                                            * \n" );
+    printf( " *                                            * \n" );
+    printf( " *                                            * \n" );
+    printf( " ********************************************** \n" );
+    printf( " ********************************************** \n" );
+
+
     //
     // Port configuration
     //
