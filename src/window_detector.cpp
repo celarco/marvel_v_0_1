@@ -10,14 +10,16 @@
 #include <math.h>
 #include <stdlib.h>
 #include <iostream>
-#include "opencv2/opencv.hpp"
-
 
 
 /**
- * this code under B.S.D licence
+ * This tutorial Under B.S.D licence
  */
 
+double some=0;
+ 
+ using namespace cv;
+ using namespace std;
 
 
 // Return the rotation matrices for each rotation
@@ -79,14 +81,17 @@ void rotate(cv::Mat& src, double angle, cv::Mat& dst) {
 
 
 
- 
- using namespace cv;
- using namespace std;
+
+
+
 
 static const std::string OPENCV_WINDOW = "Image window";
 
 class ImageConverter
    {
+
+
+
      ros::NodeHandle nh_;
      image_transport::ImageTransport it_;
      image_transport::Subscriber image_sub_;
@@ -173,26 +178,16 @@ class ImageConverter
      debug=cv::mean(blur_img);
      // meanStdDev(blur_img, Minav, minAV , CvArr** mask=NULL);
      
-     
+     rotate(blur_img, 180, blur_img);
+
       //equalizeHist( blur_img, binary );
       //imshow("histogram",binary);
       
       blur(blur_img , binary , Size(3 , 3) , Point(-1,-1), 0 );
       
-//rotate function -----------------------------------------------------------------------------------------------------//
-
-
-       rotate(binary, 180, binary);
-
-
-//rotate function -----------------------------------------------------------------------------------------------------//
-
-
-
-
-      imshow ("blur shode",binary);
+  //    imshow ("blur shode",binary);
       
-      
+      /*
      cout << "maxval:   " << maxVal << endl ;
      cout << "minval:   " << minVal << endl;
      Minav=(maxVal+minVal)/2.0;
@@ -206,7 +201,7 @@ class ImageConverter
      
      cout << "================================" <<endl;
 
-
+*/
 
 
 
@@ -237,7 +232,7 @@ if (maxVal-debug[0] > binary_tresh)
       cv::threshold( binary, binary, 0, 255,0);
 
 binary2=binary;   
-   imshow("binary",binary);
+ //  imshow("binary",binary);
    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    
   // imshow ("origin binary",binary);
@@ -300,11 +295,21 @@ binary2=binary;
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+double x[10000];
+double y[10000];
 
  /// Get the moments
   vector<Moments> mu(contours.size() );
+
+
+
+
   for( int i = 0; i < contours.size(); i++ )
-     { mu[i] = moments( contours[i], false ); }
+     { mu[i] = moments( contours[i], false );
+
+
+  }
+
 
   ///  Get the mass centers:
   vector<Point2f> mc( contours.size() );
@@ -315,10 +320,15 @@ binary2=binary;
 
  createTrackbar( " binary_tresh:", "binary", &binary_tresh, max_thresh, 0 );
  
+
+
 if (maxVal-debug[0] > binary_tresh){
 	
   /// Draw contours
   Mat drawing = Mat::zeros( canny_output.size(), CV_8UC3 );
+
+
+
   for( int i = 0; i< contours.size(); i++ )
      {
        Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
@@ -327,30 +337,88 @@ if (maxVal-debug[0] > binary_tresh){
      
 
 
+
     
     /// Calculate the area with the moments 00 and compare with the result of the OpenCV function
-  printf("\t Info: Area and Contour Length \n");
+  //printf("\t Info: Area and Contour Length \n");
   for( int i = 0; i< contours.size(); i++ )
      {
-       printf(" * Contour[%d] - Area (M_00) = %.2f - Area OpenCV: %.2f - Length: %.2f \n", i, mu[i].m00, contourArea(contours[i]), arcLength( contours[i], true ) );
+     //  printf(" * Contour[%d] - Area (M_00) = %.2f - Area OpenCV: %.2f - Length: %.2f \n", i, mu[i].m00, contourArea(contours[i]), arcLength( contours[i], true ) );
        Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
        drawContours( drawing, contours, i, color, 2, 8, hierarchy, 0, Point() );
        circle( drawing, mc[i], 4, color, -1, 8, 0 );
+
      }
 
-
- imshow( "Contours", drawing );
+ imshow( "Origin Contour", drawing );
 
 
 
 }
 
+double counter;
 
-	
-    cv::imshow("Bax asli", blur_img);
+
+
+
+
+if (maxVal-debug[0] > binary_tresh){
+
+
+ for( int i = 0; i < contours.size(); i++ )
+ {
+
+     counter=counter+1;
+
+      if (counter==20){
+          some=0;
+          counter=0;
+      }
+
+
+   if ( (arcLength( contours[i], true ) >= some) && (contourArea(contours[i])>= some) )
+     {
+
+       /// Draw contours
+       Mat drawing1 = Mat::zeros( canny_output.size(), CV_8UC3 );
+
+       Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
+       drawContours( drawing1, contours, i, color, 2, 8, hierarchy, 0, Point() );
+
+       circle( drawing1, mc[i], 4, color, -1, 8, 0 );
+       imshow( "Target Lock", drawing1);
+
+   some=arcLength( contours[i] , true );
+   x[i]=mu[i].m10/mu[i].m00;
+   y[i]=mu[i].m01/mu[i].m00;
+   double orientation = 0.5*atan(2*mu[i].m11 / (mu[i].m20 - mu[i].m02)); //get say angle
+
+   cout << "x        :" << x[i] << "========" << some <<endl;
+   cout << "y        :" << y[i] << "========"<< some <<endl;
+   cout << "Delta X  :" << x[i]-(640/2) << endl;
+   cout << "Delta Y  :" << y[i]-(480/2) << endl;
+
+   cout << "Angle (Pitch)           :" << orientation*57.3 <<  endl;
+
+
+
+
+
+
+    }
+//else cout << "not found" << endl;
+
+
+ }                                          //for end
+
+
+
+
+}                                           //end if
+
+    //cv::imshow("ax asli", blur_img);
     //cv::imshow("binary", binary);
    
-    
 
      
 //    imshow( "Dilation Demo", dilation_dst );
@@ -378,13 +446,12 @@ if (maxVal-debug[0] > binary_tresh){
    printf( " *                                            * \n" );
    printf( " *     This program debug and Develop by      * \n" );
    printf( " *          Mohammad Hossein Kazemi           * \n" );
-   printf( " *                Ali Jameei                  * \n" );
+   printf( " *               Ali Jameie                   * \n" );
    printf( " *        All Right reserved 2015-2016        * \n" );
    printf( " *      Email:Mhkazemi_engineer@yahoo.com     * \n" );
-   printf( " *       Email:Celarco.Group@Gmail.com        * \n" );
+   printf( " *        Email:Celarco.Group@Gmail.com       * \n" );
    printf( " *     AmirKabir University of Technology     * \n" );
-   printf( " *    AUT-MAV AUTONUMUS AIRIAL VEHICLE TEAM   * \n" );
-   printf( " *                                            * \n" );
+   printf( " *   AUT-MAV AUTONOMOUS AIRIAL VEHICLE TEAM   * \n" );
    printf( " *                                            * \n" );
    printf( " *                                            * \n" );
    printf( " *                                            * \n" );
