@@ -37,7 +37,7 @@ void msg_receive(uint8_t c) {
     {   //
         // Handle message
         //
-        std::cout <<int(msg.msgid) <<std::endl;
+        std::cout << int(msg.msgid) <<std::endl;
 		switch(msg.msgid)
         {   case MAVLINK_MSG_ID_HEARTBEAT:
 				mavlink_heartbeat_t heartbeat;
@@ -48,8 +48,13 @@ void msg_receive(uint8_t c) {
             case MAVLINK_MSG_ID_ATTITUDE:
 				mavlink_attitude_t attitude_msg;
 				mavlink_msg_attitude_decode(&msg, &attitude_msg);
-				autopilot_msg.rate = attitude_msg.rollspeed * 180 / 3.14;
-				std::cout << autopilot_msg.rate << std::endl;
+				autopilot_msg.rate = attitude_msg.yawspeed * 180 / 3.14;
+			break;
+			case MAVLINK_MSG_ID_VFR_HUD:
+				mavlink_vfr_hud_t vfr_msg;
+				mavlink_msg_vfr_hud_decode(&msg, &vfr_msg);
+				autopilot_msg.heading = vfr_msg.heading;
+				autopilot_msg.climb = vfr_msg.climb;
 			break;
 			case MAVLINK_MSG_ID_PARAM_VALUE:
 				mavlink_param_value_t param_value_msg;
@@ -294,7 +299,32 @@ void msg_send_disarm() {
 // Mavlink heartbeat message send function
 //
 void msg_send_heartbeat() {
-	
+	//
+	// Command initializtion
+	//
+	mavlink_heartbeat_t heartbeat_msg;
+	heartbeat_msg.type = MAV_TYPE_GCS;
+	heartbeat_msg.autopilot = MAV_AUTOPILOT_INVALID;
+	heartbeat_msg.base_mode = 0;
+	heartbeat_msg.custom_mode = 0;
+	heartbeat_msg.system_status = 0;
+	heartbeat_msg.mavlink_version = 3;
+	//
+	// Message pack and send
+	// 
+	mavlink_message_t msg;
+	uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+	mavlink_msg_heartbeat_encode(255, 0, &msg, &heartbeat_msg);
+	unsigned len = mavlink_msg_to_send_buffer(buf, &msg);
+	asio::write(port, asio::buffer(buf,len));
+	std::cout << "heartbeat sent" << std::endl;
+}
+//
+// Heartbeat send timer callback function
+//
+void msg_send_heartbeat_callback(const ros::TimerEvent&)
+{
+	msg_send_heartbeat();
 }
 //
 // Mavlink request parameter message send fucntion
@@ -370,10 +400,11 @@ int main(int argc, char **argv) {
     ros::Publisher pub = n.advertise<marvel_v_0_1::Autopilot>("server", 1000);
     ros::Subscriber sub = n.subscribe("guidance_pack", 1000, guidance_msg_Callback);
     ros::Timer rc_timer = n.createTimer(ros::Duration(0.1), msg_send_radio_callback);
+	ros::Timer heartbeat_timer = n.createTimer(ros::Duration(1.0), msg_send_heartbeat_callback);
 	//
 	// Read autopilot parameters
 	//
-	msg_send_request_param();
+	//msg_send_request_param();
 	//
     // Main loop
     //
