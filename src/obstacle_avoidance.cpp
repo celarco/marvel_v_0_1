@@ -10,10 +10,12 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <stdio.h>
 #include <math.h>
+#include <marvel_v_0_1/window_detector.h>
+
 
 /**
  * This tutorial demonstrates simple receipt of messages over the ROS system.
- */
+ **/
  
 
 
@@ -22,6 +24,8 @@ static const std::string OPENCV_WINDOW = "Image window";
 class ImageConverter
    {
      ros::NodeHandle nh_;
+     ros::NodeHandle n;
+
      image_transport::ImageTransport it_;
      image_transport::Subscriber image_sub_;
      image_transport::Publisher image_pub_;
@@ -176,6 +180,8 @@ class ImageConverter
    int main(int argc, char** argv)
    {
      ros::init(argc, argv, "image_converter");
+     ros::init(argc, argv, "obstacle_detection");
+
      ImageConverter ic;
      ros::spin();
      return 0;
