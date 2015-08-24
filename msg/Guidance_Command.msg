@@ -4,3 +4,6 @@ float32 pitch
 float32 yaw
 bool arm
 uint8 mode
+float32 vx_uni
+float32 vy_uni
+float32 vz_uni
