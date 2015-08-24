@@ -15,6 +15,7 @@
 vertical_mode g_vertical_mode;
 horizontal_mode g_horizontal_mode;
 heading_mode g_heading_mode;
+lock_param g_lock_param;
 
 int quality;
 
@@ -30,12 +31,10 @@ float height;
 float rate_setpoint = 0;
 float rate;
 
-int heading_lock_param;
-int horizontal_lock_param;
-int vertical_lock_param;
-
 float rotate_break_cond;
 float move_oa_break_cond;
+
+bool armed;
 
 pid pid_x, pid_y, pid_z, pid_h;
 //
@@ -133,7 +132,10 @@ void optical_flow_Callback(const marvel_v_0_1::OpticalFlow::ConstPtr& msg) {
 // Server receive callback function
 //
 void server_receive_Callback(const marvel_v_0_1::Autopilot::ConstPtr& msg) {
-
+	heading = msg->heading;
+	rate = msg->rate;
+	v_z = msg->climb;
+	armed = msg->armed;
 }
 //
 // Main program start
@@ -204,13 +206,19 @@ int main(int argc, char **argv) {
             g_horizontal_mode = HORIZONTAL_HOLD;
             g_heading_mode = HEADING_HOLD;
             v_z_setpoint = f[current_function_no].arg[0];
+			height_setpoint = f[current_function_no].arg[1];
+			if(height >= height_setpoint) {
+				f[current_function_no].done = true;
+				g_vertical_mode = VERTICAL_HOLD;
+			}
+				
         break;
 
         case hold_position:
             g_vertical_mode = VERTICAL_HOLD;
             g_horizontal_mode = HORIZONTAL_HOLD;
             g_heading_mode = HEADING_HOLD;
-        break;
+		break;
 
         case set_heading:
             g_heading_mode = HEADING_RATE;
@@ -258,18 +266,36 @@ int main(int argc, char **argv) {
         break;
 
         case go_oa:
+		
             g_vertical_mode = VERTICAL_LOCK;
             g_horizontal_mode = HORIZONTAL_LOCK;
-            horizontal_lock_param = int(f[current_function_no].arg[0]);
-            vertical_lock_param = int(f[current_function_no].arg[1]);
-        break;
+            g_lock_param = int(f[current_function_no].arg[0]);
+			
+			switch (g_lock_param){
+			 
+			case WINDOW_DETECTOR:
+			break;
+				 
+			case FLOWER:
+			break;
+				 
+			case MARKER:
+			break;
+				 
+			case ROPE:
+			break; 
+				 
+			}
+		break;
+		
         }
 		//
 		// Vertical mode pd
 		//
         switch(g_vertical_mode) {
         case VERTICAL_HOLD:
-
+			pid_z.set_coeff(0.4,0);
+			guidance_msg.throttle = 100 * pid_z.loop_once((height_setpoint - height),0) + 50;
         break;
 
         case VERTICAL_LOCK:
@@ -277,20 +303,32 @@ int main(int argc, char **argv) {
 
         break;
         case VERTICAL_CLIMB:
-
-        break;
+			pid_z.set_coeff(0.4,0);
+			guidance_msg.throttle = 100 * pid_z.loop_once((v_z_setpoint - v_z),0) + 50; 
+		break;
         }
 		//
 		// Horizontal pd
 		//
 		switch(g_horizontal_mode) {
 		case HORIZONTAL_HOLD:
-		
+			pid_x.set_coeff(1,0);
+			if(((0 - v_x) >= 0.01) || ((0 - v_x) <= -0.01)) {
+				guidance_msg.roll = 100 * pid_x.loop_once((0 - v_x),0);
+			}
+			else if (((0 - v_x) <= 0.01) || ((0 - v_x) >= -0.01)) {
+				guidance_msg.roll = 0;
+			}
+			
+			pid_y.set_coeff(1,0);
+			if(((0 - v_y) >= 0.01) || ((0 - v_y) <= -0.01)) {
+				guidance_msg.pitch = 100 * pid_y.loop_once((0 - v_y),0);
+			}
+			else if (((0 - v_y) <= 0.01) || ((0 - v_y) >= -0.01)) {
+				guidance_msg.pitch = 0;
+			}
 		break;
 		case HORIZONTAL_LOCK:
-		
-		break;
-		case HORIZONTAL_CLIMB:
 		
 		break;
 		case HORIZONTAL_VELOCITY:
@@ -302,10 +340,11 @@ int main(int argc, char **argv) {
 		//
 		switch(g_heading_mode) {
 		case HEADING_HOLD:
-		
+			pid_h.set_coeff(0.007,0);
+			guidance_msg.yaw = 100 * pid_h.loop_once((heading_setpoint-heading),0);
 		break;
 		case HEADING_LOCK:
-		
+			
 		break;
 		case HEADING_RATE:
 		

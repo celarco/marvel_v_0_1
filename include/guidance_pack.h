@@ -10,7 +10,6 @@ enum vertical_mode {
 enum horizontal_mode {
     HORIZONTAL_HOLD,
     HORIZONTAL_LOCK,
-    HORIZONTAL_CLIMB,
     HORIZONTAL_VELOCITY
 };
 
@@ -20,4 +19,10 @@ enum heading_mode {
     HEADING_RATE
 };
 
+enum lock_param {
+	WINDOW_DETECTOR = 1,
+	FLOWER,
+	MARKER,
+	ROPE
+};
 #endif
