@@ -10,20 +10,39 @@
 #include <math.h>
 #include <stdlib.h>
 #include <iostream>
+#include "opencv2/core/core.hpp"
+#include <marvel_v_0_1/window_detector.h>
+
 
 
 /**
  * This tutorial Under B.S.D licence
- */
+**/
+
+
+
 
 double some=0;
- 
+int imgW = 650;
+int imgH = 50;
+
+
+
+
  using namespace cv;
  using namespace std;
 
 
+
+    marvel_v_0_1::window_detector vdata;
+  //  ros::init(argc, argv, "position_data");
+   // ros::NodeHandle n;
+
+
 // Return the rotation matrices for each rotation
 void rotate(cv::Mat& src, double angle, cv::Mat& dst) {
+
+
   cv::Mat r = getRotationMatrix2D(cv::Point2f(), angle, 1.0);
 
   //4 coordinates of the image
@@ -93,6 +112,11 @@ class ImageConverter
 
 
      ros::NodeHandle nh_;
+     ros::NodeHandle n;
+     ros::Publisher chatter_pub = n.advertise<marvel_v_0_1::window_detector>("window_postion", 1000);
+     float value,value1,value2,value3,value4,value5;
+
+
      image_transport::ImageTransport it_;
      image_transport::Subscriber image_sub_;
      image_transport::Publisher image_pub_;
@@ -105,7 +129,7 @@ class ImageConverter
        image_sub_ = it_.subscribe("/camera/depth/image_raw", 1, 
     
          &ImageConverter::imageCb_d, this);
-       image_pub_ = it_.advertise("/image_converter/output_video", 1);
+      // image_pub_ = it_.advertise("/image_converter/output_video", 1);
    
        //cv::namedWindow(OPENCV_WINDOW);
      }
@@ -386,35 +410,64 @@ if (maxVal-debug[0] > binary_tresh){
        drawContours( drawing1, contours, i, color, 2, 8, hierarchy, 0, Point() );
 
        circle( drawing1, mc[i], 4, color, -1, 8, 0 );
-       imshow( "Target Lock", drawing1);
+
+
+
+
+       int fontFace = FONT_HERSHEY_COMPLEX_SMALL;
+       double fontScale = 1.5;
+       int thickness = 2;
+       Point textOrg(imgW/5, imgH/1.2);
+       string someText = "AUTMAV target locked!";
+       putText(drawing1, someText, textOrg, fontFace, fontScale, Scalar::all(255), thickness,8);
+
+
+          imshow( "Target Lock", drawing1);
+
+
 
    some=arcLength( contours[i] , true );
    x[i]=mu[i].m10/mu[i].m00;
    y[i]=mu[i].m01/mu[i].m00;
    double orientation = 0.5*atan(2*mu[i].m11 / (mu[i].m20 - mu[i].m02)); //get say angle
-
+/*
    cout << "x        :" << x[i] << "========" << some <<endl;
    cout << "y        :" << y[i] << "========"<< some <<endl;
    cout << "Delta X  :" << x[i]-(640/2) << endl;
    cout << "Delta Y  :" << y[i]-(480/2) << endl;
 
    cout << "Angle (Pitch)           :" << orientation*57.3 <<  endl;
+*/
+
+   value=x[i];
+   value1=y[i];
+   value2=(x[i]-(640/2));
+   value3=(y[i]-(480/2));
+   value4=(orientation*57.3);
+   vdata.x=value;
+   vdata.y=value1;
+   vdata.deltax=value2;
+   vdata.deltay=value3;
+   vdata.pith=value4;
+
+   chatter_pub.publish(vdata);
+   ros::spinOnce();
 
 
+   /*
 
-
-
+  */
 
     }
 //else cout << "not found" << endl;
 
 
- }                                          //for end
+ }                                              //for end
 
 
 
 
-}                                           //end if
+}                                               //end if
 
     //cv::imshow("ax asli", blur_img);
     //cv::imshow("binary", binary);
@@ -459,7 +512,11 @@ if (maxVal-debug[0] > binary_tresh){
    printf( " ********************************************** \n" );
    printf( " ********************************************** \n" );
    
-     ros::init(argc, argv, "image_converter");
+       ros::init(argc, argv, "image_converter");
+       ros::init(argc, argv, "position_data");
+
+
+
      ImageConverter ic;
      ros::spin();
      return 0;
