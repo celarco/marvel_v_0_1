@@ -426,7 +426,7 @@ int main(int argc, char **argv) {
 	// Read autopilot parameters
 	//
 	msg_send_request_stream();
-	//msg_send_request_param();
+	msg_send_request_param();
 	//
     // Main loop
     //
