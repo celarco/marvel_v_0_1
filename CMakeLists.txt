@@ -34,7 +34,7 @@ rosbuild_gensrv()
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
-rosbuild_add_executable(guidance_pack ${GUIDANCE_PACK_SRCS})
+#rosbuild_add_executable(guidance_pack ${GUIDANCE_PACK_SRCS})
 rosbuild_add_executable(optical_flow src/optical_flow.cpp)
 rosbuild_add_executable(qr_code src/qr_code.cpp)
 
@@ -42,7 +42,7 @@ rosbuild_add_executable(server src/server.cpp)
 rosbuild_add_executable(xtion_fpv src/xtion_fpv.cpp)
 rosbuild_add_executable(window_detector src/window_detector.cpp)
 rosbuild_add_executable(server src/server.cpp src/radio.cpp)
-rosbuild_add_executable(obstacle_avoidance src/obstacle_avoidance.cpp)
+#rosbuild_add_executable(obstacle_avoidance src/obstacle_avoidance.cpp)
 
 
 target_link_libraries (qr_code  ${ZBAR_LIBRARIES}    ${OpenCV_LIBS}  zbar)

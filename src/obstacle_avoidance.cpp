@@ -44,6 +44,7 @@ class ImageConverter
      ros::NodeHandle ns;
      ros::Publisher chatter_pub = n.advertise<marvel_v_0_1::obstacle_avoidance>("obstacle_data", 1000);
      ros::Subscriber sub = n.subscribe("guidance_pack", 1000, obstacle_subscribe_callback);
+
      float value,value1,value2,value3;
      image_transport::ImageTransport it_;
      image_transport::Subscriber image_sub_;
