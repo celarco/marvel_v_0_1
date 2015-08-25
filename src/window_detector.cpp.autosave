@@ -133,7 +133,7 @@ static const std::string OPENCV_WINDOW = "Image window";
 class ImageConverter
    {
 
-
+if 
 
      ros::NodeHandle nh_;
      ros::NodeHandle n;

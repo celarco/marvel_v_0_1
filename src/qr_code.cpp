@@ -23,14 +23,14 @@
  marvel_v_0_1::QRms vdata;
  
  // using namespace std
-   bool add(marvel_v_0_1::qr_kill::Request  &req, marvel_v_0_1::qr_kill::Response &res)
+   bool add(marvel_v_0_1::qr_kill::Request  &msg, marvel_v_0_1::qr_kill::Response &res)
             
     {
-      res.sum = req.a + req.b;
-      ROS_INFO("request: x=%ld, y=%ld", (long int)req.a, (long int)req.b);
+      res.sum = msg.a + msg.b;
+      ROS_INFO("request: x=%ld, y=%ld", (long int)msg.a, (long int)msg.b);
       ROS_INFO("sending back response: [%ld]", (long int)res.sum);
-        x=req.a;
-        y=req.b;
+        x=msg.a;
+        y=msg.b;
        
     std:: cout << "kill programm" <<  endl <<  "kill programm " << endl ;
     
