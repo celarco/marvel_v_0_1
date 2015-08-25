@@ -147,18 +147,18 @@ void server_receive_Callback(const marvel_v_0_1::Autopilot::ConstPtr& msg) {
 // Window position data receive callback function
 //
 void window_postion_receive_Callback(const marvel_v_0_1::window_detector::ConstPtr& msg) {
-	window_deltax=msg->deltax;
-	window_deltay=msg->deltay;
-	window_pitch=msg->pith;
+	window_deltax = msg->deltax;
+	window_deltay = msg->deltay;
+	window_pitch = msg->pith;
 }
 //
 // Obstacle Avoidance data receive callback function
 //
 void window_postion_receive_Callback(const marvel_v_0_1::obstacle_avoidance::ConstPtr& msg) {
-	obstacle_vx_setpoint=msg->vx;
-	obstacle_vy_setpoint=msg->vy;
-	obstacle_vz_setpoint=msg->vz;
-	obstacle_psi_setpoint=msg->psidot
+	obstacle_vx_setpoint = msg->vx;
+	obstacle_vy_setpoint = msg->vy;
+	obstacle_vz_setpoint = msg->vz;
+	obstacle_psi_setpoint = msg->psidot
 }
 //
 // Main program start
